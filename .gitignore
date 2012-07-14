@@ -2,6 +2,11 @@
 .webauth
 config.lua
 
+#Arduino
+*.hex
+*.elf
+*.epp
+
 # Compiled Object files
 *.slo
 *.lo
