@@ -1,6 +1,5 @@
 #protected
 .webauth
-config.lua
 
 #Arduino
 *.hex
@@ -20,3 +19,6 @@ config.lua
 *.lai
 *.la
 *.a
+
+#Temp files
+*.log
