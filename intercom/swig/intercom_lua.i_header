@@ -1,0 +1,47 @@
+%module pjs
+%include <typemaps.i>
+%include <carrays.i>
+%include <std_string.i>
+%{
+#include "../../project_config.h"
+#include "../../pjs_messages_queue.h"
+#include "../../pjs_intercom_messages.h"
+#include "../../pjs_external_controller.h"
+#include "../../pjs_intercom_script_interface.h"
+#include "../../pjs_lua_libs.h"
+#include "../../pjs_vr.h"
+
+%}
+
+typedef int               pj_status_t;
+typedef int               pj_bool_t;
+typedef unsigned short    pj_uint16_t;
+typedef unsigned int      pj_uint32_t;
+typedef unsigned char     pj_uint8_t;
+
+typedef short pj_int16_t;
+typedef int pj_int32_t;
+typedef char pj_char_t;
+typedef long long pj_int64_t;
+typedef unsigned long long pj_uint64_t;
+
+typedef enum pjsip_inv_state
+{
+    PJSIP_INV_STATE_NULL,    /**< Before INVITE is sent or received  */
+    PJSIP_INV_STATE_CALLING,    /**< After INVITE is sent    */
+    PJSIP_INV_STATE_INCOMING,    /**< After INVITE is received.    */
+    PJSIP_INV_STATE_EARLY,    /**< After response with To tag.    */
+    PJSIP_INV_STATE_CONNECTING,    /**< After 2xx is sent/received.    */
+    PJSIP_INV_STATE_CONFIRMED,    /**< After ACK is sent/received.    */
+    PJSIP_INV_STATE_DISCONNECTED,   /**< Session is terminated.    */
+} pjsip_inv_state;
+
+// From pjlib/include/pj/types.h:86
+/** Status is OK. */
+#define PJ_SUCCESS  0
+/** True value. */
+#define PJ_TRUE     1
+/** False value. */
+#define PJ_FALSE    0
+
+#define DEFINE_LUA_INTERFACE_CLASS_NAME(A)
