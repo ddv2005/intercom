@@ -1,4 +1,4 @@
-. ./set_arm6.sh
+. ../build/set_arm6.sh
 make clean
 make
 cp *.so armv6/

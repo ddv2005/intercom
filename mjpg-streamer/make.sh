@@ -1,4 +1,4 @@
-. ./set_arm.sh
+. ../build/set_arm.sh
 make clean
 make
 mkdir arm

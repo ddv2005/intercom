@@ -43,7 +43,7 @@ application: $(APP_BINARY)
 plugins: $(PLUGINS)
 
 $(APP_BINARY): mjpg_streamer.c mjpg_streamer.h mjpg_streamer.o utils.c utils.h utils.o
-	$(CC) $(CFLAGS) $(OBJECTS) $(LFLAGS) -o $(APP_BINARY)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(LFLAGS) -o $(APP_BINARY)
 	chmod 755 $(APP_BINARY)
 
 ifeq ($(USE_LIBV4L2),true)
