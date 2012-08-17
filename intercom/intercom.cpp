@@ -31,6 +31,7 @@ int main(int argc, const char * argv[])
 	pjs_config_init(config);
 	pjs_lua *lua_c;
 	const char * config_file_name = "config.lua";
+	int config_result_value = -100;
 
 	if (argc > 1)
 		config_file_name = argv[1];
@@ -49,6 +50,11 @@ int main(int argc, const char * argv[])
 				lua_pop(lua_c->get_state(), 1);
 				exit(-1);
 			}
+			else
+			{
+				config_result_value = lua_tointeger(lua_c->get_state(), -1);
+				printf("LUA Config result code : %d\n", config_result_value);
+			}
 		}
 		else
 		{
@@ -63,22 +69,27 @@ int main(int argc, const char * argv[])
 	}
 
 	delete lua_c;
-	pjsis.set_config(config);
-
-	sem_init(&exitSignal, 1, 1);
-
-	if (pjsis.start() == RC_OK)
+	if(config_result_value>=0)
 	{
-		sem_wait(&exitSignal);
-		signal(SIGINT, termination_handler);
-		signal(SIGHUP, termination_handler);
-		signal(SIGTERM, termination_handler);
-		sem_wait(&exitSignal);
-		pjsis.stop();
+		pjsis.set_config(config);
+
+		sem_init(&exitSignal, 1, 1);
+
+		if (pjsis.start() == RC_OK)
+		{
+			sem_wait(&exitSignal);
+			signal(SIGINT, termination_handler);
+			signal(SIGHUP, termination_handler);
+			signal(SIGTERM, termination_handler);
+			sem_wait(&exitSignal);
+			pjsis.stop();
+		}
+		else
+			printf("Can't start system\n");
+		sem_destroy(&exitSignal);
+		return 0;
 	}
 	else
-		printf("Can't start system\n");
-	sem_destroy(&exitSignal);
-	return 0;
+		return config_result_value;
 }
 

@@ -10,7 +10,7 @@
 #include "../../pjs_intercom_script_interface.h"
 #include "../../pjs_lua_libs.h"
 #include "../../pjs_vr.h"
-
+#include "../../libconfig/libconfig.hpp"
 %}
 
 typedef int               pj_status_t;

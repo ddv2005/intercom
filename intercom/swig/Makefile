@@ -2,7 +2,7 @@ APP_DIR=$(CURDIR)/..
 APP_HEADERS=${APP_DIR}/project_config.h ${APP_DIR}/pjs_utils.h \
 ${APP_DIR}/pjs_messages_queue.h ${APP_DIR}/pjs_intercom_messages.h \
 ${APP_DIR}/pjs_external_controller.h ${APP_DIR}/pjs_intercom_script_interface.h \
-${APP_DIR}/pjs_lua_libs.h ${APP_DIR}/pjs_vr.h
+${APP_DIR}/pjs_lua_libs.h ${APP_DIR}/pjs_vr.h ${APP_DIR}/libconfig/libconfig.hpp
 
 LINUX_INCLUDE=-I ${APP_DIR}
 LINUX_LIBDIR=
