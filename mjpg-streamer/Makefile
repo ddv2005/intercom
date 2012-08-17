@@ -11,9 +11,9 @@
 # to use another directory you can specify it with:
 # $ sudo make DESTDIR=/some/path install
 # set the compiler to use
-export CC=/opt/gcc-4.7/bin/arm-linux-gnueabi-gcc
+#export CC=/opt/gcc-4.7/bin/arm-linux-gnueabi-gcc
 
-export CFLAGS = -O3 -DLINUX -D_GNU_SOURCE -Wall -fomit-frame-pointer -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -ftree-vectorize -fmessage-length=0 -marm -flto
+#export CFLAGS = -O3 -DLINUX -D_GNU_SOURCE -Wall -fomit-frame-pointer -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -ftree-vectorize -fmessage-length=0 -marm -flto
 
 
 # we are using the libraries "libpthread" and "libdl"
@@ -46,15 +46,6 @@ $(APP_BINARY): mjpg_streamer.c mjpg_streamer.h mjpg_streamer.o utils.c utils.h u
 	$(CC) $(CFLAGS) $(OBJECTS) $(LFLAGS) -o $(APP_BINARY)
 	chmod 755 $(APP_BINARY)
 
-output_autofocus.so: mjpg_streamer.h utils.h
-	make -C plugins/output_autofocus all
-	cp plugins/output_autofocus/output_autofocus.so .
-
-input_testpicture.so: mjpg_streamer.h utils.h
-	make -C plugins/input_testpicture all
-	cp plugins/input_testpicture/input_testpicture.so .
-
-
 ifeq ($(USE_LIBV4L2),true)
 input_uvc.so: mjpg_streamer.h utils.h
 	make -C plugins/input_uvc USE_LIBV4L2=true all
@@ -64,14 +55,6 @@ input_uvc.so: mjpg_streamer.h utils.h
 	make -C plugins/input_uvc all
 	cp plugins/input_uvc/input_uvc.so .
 endif
-
-input_control.so: mjpg_streamer.h utils.h
-	make -C plugins/input_control all
-	cp plugins/input_control/input_control.so .
-
-output_file.so: mjpg_streamer.h utils.h
-	make -C plugins/output_file all
-	cp plugins/output_file/output_file.so .
 
 ifeq ($(WXP_COMPAT),true)
 output_http.so: mjpg_streamer.h utils.h
@@ -87,21 +70,10 @@ output_udp.so: mjpg_streamer.h utils.h
 	make -C plugins/output_udp all
 	cp plugins/output_udp/output_udp.so .
 
-input_gspcav1.so: mjpg_streamer.h utils.h
-	make -C plugins/input_gspcav1 all
-	cp plugins/input_gspcav1/input_gspcav1.so .
-
-input_file.so: mjpg_streamer.h utils.h
-	make -C plugins/input_file all
-	cp plugins/input_file/input_file.so .
-
 output_rtsp.so: mjpg_streamer.h utils.h
 	make -C plugins/output_rtsp all
 	cp plugins/output_rtsp/output_rtsp.so .
 	
-output_ptp2.so: mjpg_streamer.h utils.h
-	make -C plugins/input_ptp2 all
-	cp plugins/input_ptp2/input_ptp2.so .	
 
 #input_http.so: mjpg_streamer.h utils.h
 #	make -C plugins/input_http all
@@ -119,14 +91,8 @@ output_viewer.so: mjpg_streamer.h utils.h
 # cleanup
 clean:
 	make -C plugins/input_uvc $@
-	make -C plugins/input_testpicture $@
-	make -C plugins/output_file $@
 	make -C plugins/output_http $@
 	make -C plugins/output_udp $@
-	make -C plugins/output_autofocus $@
-	make -C plugins/input_gspcav1 $@
-	make -C plugins/output_viewer $@
-	make -C plugins/input_control $@
 	make -C plugins/output_rtsp $@
 #	make -C plugins/input_http $@
 	rm -f *.a *.o $(APP_BINARY) core *~ *.so *.lo
