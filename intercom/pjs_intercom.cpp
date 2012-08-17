@@ -346,11 +346,11 @@ pjs_result_t pjs_intercom_system::start()
 
 								if (m_config.sip_accounts.accounts[i].is_local_network)
 								{
-									acc_cfg.allow_contact_rewrite = 0;
+									acc_cfg.allow_contact_rewrite = PJ_FALSE;
 								}
 								else
 								{
-									acc_cfg.allow_contact_rewrite = 1;
+									acc_cfg.allow_contact_rewrite = PJ_TRUE;
 								}
 
 								status = pjsua_acc_add(&acc_cfg, PJ_TRUE, &m_acc_id[i]);
