@@ -433,7 +433,7 @@ static int pb_thread_func (void *arg)
     pj_timestamp tstamp;
     int result;
     
-    alsa_set_max_relative_thread_priority(-2);    
+    alsa_set_max_relative_thread_priority(-11);    
 
     pj_bzero (buf, size);
     tstamp.u64 = 0;
@@ -488,7 +488,7 @@ static int ca_thread_func (void *arg)
     pj_timestamp tstamp;
     int result;
 
-    alsa_set_max_relative_thread_priority(-1);
+    alsa_set_max_relative_thread_priority(-10);
     
     pj_bzero (buf, size);
     tstamp.u64 = 0;
