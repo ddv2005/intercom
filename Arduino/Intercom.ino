@@ -204,7 +204,12 @@ static msg_t TempSensorThread(void *arg) {
         int16_t tempC = ceil(fTemp*10-0.5);
         if(tempC<0)
           tempC=0;
-        tempC += 100;
+        if(tempC<=250)
+        	tempC += 100;
+        else
+        {
+        	tempC += 100 + (tempC-250)*13/10;
+        }
         fan.setTemp(tempC,1);
       }
     }
