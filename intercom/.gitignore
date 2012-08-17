@@ -1,3 +1,9 @@
 /config.lua
 /run_arm.sh
 /www
+/.settings/
+/ARM Release/
+/ARMv6 Release/
+/db/
+/Debug/
+/Release/

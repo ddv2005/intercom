@@ -5,20 +5,19 @@
 *.hex
 *.elf
 *.epp
-
 # Compiled Object files
 *.slo
 *.lo
 *.o
 *.d
-
 # Compiled Dynamic libraries
 *.so
-
 # Compiled Static libraries
 *.lai
 *.la
 *.a
-
 #Temp files
 *.log
+/serial/
+/rfid/
+/system/
