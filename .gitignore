@@ -21,3 +21,6 @@
 /serial/
 /rfid/
 /system/
+/db
+/http.sh
+/pwd_hash
