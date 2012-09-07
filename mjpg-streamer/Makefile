@@ -11,9 +11,8 @@
 # to use another directory you can specify it with:
 # $ sudo make DESTDIR=/some/path install
 # set the compiler to use
-#export CC=/opt/gcc-4.7/bin/arm-linux-gnueabi-gcc
 
-#export CFLAGS = -O3 -DLINUX -D_GNU_SOURCE -Wall -fomit-frame-pointer -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -ftree-vectorize -fmessage-length=0 -marm -flto
+#export CFLAGS += -DDEBUG
 
 
 # we are using the libraries "libpthread" and "libdl"
