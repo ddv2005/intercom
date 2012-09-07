@@ -5,9 +5,13 @@
 #include "arduino_comm.h"
 #include "led_controller.h"
 #include "dynamic_delay.h"
+#ifdef	HAS_FAN
 #include "fan.h"
+#ifdef	HAS_TEMP_SENSOR
 #include "DallasTemperature.h"
 #include "OneWire_ChibiOS.h"
+#endif
+#endif
 
 #undef  DEBUG_TEMP
 
@@ -21,11 +25,15 @@
 #define PIN_BTN      9
 #define PIN_INP1     7
 #define PIN_INP2     8
-#define PIN_FAN      3
-#define PIN_TEMP     5
 #define PIN_BTN2_LED   10
+#ifdef HAS_FAN
+#ifdef HAS_TEMP_SENSOR
+#define PIN_TEMP     5
+#endif
+#define PIN_FAN      3
 #define PIN_FAN_SPEED  2
 #define INT_FAN_SPEED  0
+#endif
 
 volatile byte_t isStandaloneMode = 0;
 volatile byte_t inputsValue = 0;
@@ -91,6 +99,7 @@ public:
   }
 };
 
+#ifdef HAS_FAN
 //========================== FAN SPEED DATA   ==========================
 #define FAN_MIN_SPEED  20
 // Speeds MUST be sorted from 0 -> 100
@@ -174,6 +183,7 @@ uint16_t getFanRPM()
   return result;
 }
 
+#ifdef	HAS_TEMP_SENSOR
 //========================== TEMPERATURE SENSOR   =======================
 static OneWire  tempSensorData(PIN_TEMP);
 static DallasTemperature tempSensor(&tempSensorData);
@@ -219,6 +229,8 @@ static msg_t TempSensorThread(void *arg) {
   return 0;
 }
 //=======================================================================
+#endif
+#endif
 
 #define checkInput(VALUES,VALUE,MASK) {if(VALUE)VALUES|=MASK;}
 //========================== BTN LED SCRIPTS ============================
@@ -248,8 +260,11 @@ static msg_t Btn2LedThread(void *arg) {
   return 0;
 }
 
-
+#ifdef MAIN_BTN_PULLUP
+static input_c  btnInput(PIN_BTN,BTN_GUARD_TIME,1,1);
+#else
 static input_c  btnInput(PIN_BTN,BTN_GUARD_TIME,0,0);
+#endif
 static input_c  input1(PIN_INP1,INP_GUARD_TIME,1,1);
 static input_c  input2(PIN_INP2,INP_GUARD_TIME,0,1);
 static dynamicDelayWithSignal_c controllerDelay;
@@ -279,14 +294,17 @@ static msg_t ControllerThread(void *arg) {
       else
       {
         digitalWrite(PIN_LED, LOW);
+#ifdef HAS_FAN
         fan.setMode(AFM_AUTO);
+#endif
       }
     }
 
     if(currentMode)
     {
-      int buttonState = digitalRead(PIN_BTN);
-      if(buttonState == HIGH)
+    	uint32_t now = millis();
+      byte_t buttonState = btnInput.getValue(now);
+      if(buttonState)
       {
         digitalWrite(PIN_RELAY, LOW);
         btnLed.setOFF();
@@ -376,8 +394,10 @@ byte_t packetSize;
 byte_t incomingByte = 0; 
 byte_t *packetBuffer;
 byte_t newPacketBuffer[MAX_PACKET_SIZE+4];
-uint32_t lastHostActivityTime; 
+uint32_t lastHostActivityTime;
+#ifdef HAS_FAN
 fan_data_t fan_data;
+#endif
 
 #define sendPacket(P,V) Serial.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),P,&V,sizeof(V)))
 #define sendOutput(V) sendPacket(ACC_OSTAT,V)
@@ -469,7 +489,7 @@ static msg_t SerialThread(void *arg) {
                 controllerDelay.signal();
                 break;
               }
-              
+#ifdef	HAS_FAN
             case ACC_SET_FAN_SPEED:
               {
                 if(packetSize>=2)
@@ -509,7 +529,7 @@ static msg_t SerialThread(void *arg) {
                 sendPacket(ACC_FAN_DATA,fan_data);
                 break;
               }                
-              
+#endif
             case ACC_SET_BTN_LED:
               {
                 if(packetSize>=2)
@@ -570,13 +590,15 @@ void setup() {
   // ChibiOS will enable interrupts
   Serial.begin(9600);
 
+#ifdef HAS_FAN
   fan_speed_bit = digitalPinToBitMask(PIN_FAN_SPEED);
   fan_speed_port = digitalPinToPort(PIN_FAN_SPEED);
 
   attachInterrupt(INT_FAN_SPEED,fanSpeedInt,CHANGE);
+#endif
   
   TCCR2B = 0x1;
-  isStandaloneMode = 0;
+  isStandaloneMode = 1;
   cli();
   halInit();
   chSysInit();
@@ -586,8 +608,12 @@ void setup() {
 
   resetIOValues();
 
+#ifdef	HAS_FAN
+#ifdef	HAS_TEMP_SENSOR
   chThdCreateStatic(waTempSensorThread, sizeof(waTempSensorThread),
   NORMALPRIO + 4, TempSensorThread, NULL);
+#endif
+#endif
 
   chThdCreateStatic(waBtnLedThread, sizeof(waBtnLedThread),
   NORMALPRIO + 3, BtnLedThread, NULL);

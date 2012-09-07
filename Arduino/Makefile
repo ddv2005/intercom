@@ -101,8 +101,8 @@ CTUNING = -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -ffun
 #CTUNING = -ffunction-sections -fdata-sections
 #CEXTRA = -Wa,-adhlns=$(<:.c=.lst)
 
-CFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) $(CSTANDARD) $(CEXTRA) $(CTUNING)
-CXXFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CTUNING) -fno-exceptions
+CFLAGS = $(CEXT) $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) $(CSTANDARD) $(CEXTRA) $(CTUNING)
+CXXFLAGS = $(CEXT) $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CTUNING) -fno-exceptions
 #ASFLAGS = -Wa,-adhlns=$(<:.S=.lst),-gstabs 
 LDFLAGS = -Wl,--gc-sections -lm
 
