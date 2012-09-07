@@ -245,8 +245,8 @@ pjs_result_t pjs_intercom_system::start()
 		params.bits_per_sample = 16;
 		params.flags = PJMEDIA_AUD_DEV_CAP_INPUT_LATENCY
 				| PJMEDIA_AUD_DEV_CAP_OUTPUT_LATENCY;
-		params.input_latency_ms = 60;
-		params.output_latency_ms = 60;
+		params.input_latency_ms = m_config.sound_subsystem.ptime*2;
+		params.output_latency_ms = m_config.sound_subsystem.ptime*2;
 		status = pjmedia_aud_stream_create(&params, &null_rec_cb_s, &play_cb_s,
 				this, &m_play_stream);
 
@@ -263,8 +263,8 @@ pjs_result_t pjs_intercom_system::start()
 			params.bits_per_sample = 16;
 			params.flags = PJMEDIA_AUD_DEV_CAP_INPUT_LATENCY
 					| PJMEDIA_AUD_DEV_CAP_OUTPUT_LATENCY;
-			params.input_latency_ms = 60;
-			params.output_latency_ms = 60;
+			params.input_latency_ms = m_config.sound_subsystem.ptime*2;
+			params.output_latency_ms = m_config.sound_subsystem.ptime*2;
 
 			status = pjmedia_aud_stream_create(&params, &rec_cb_s, &null_play_cb_s,
 					this, &m_rec_stream);

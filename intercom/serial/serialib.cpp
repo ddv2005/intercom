@@ -199,7 +199,7 @@ int serialib::WaitForInput(const unsigned int TimeOut_ms) {
 
 	FD_ZERO(&read_fdset);
 	FD_SET(fd,&read_fdset);
-	wait.tv_sec = TimeOut_ms / 1000000;
+	wait.tv_sec = TimeOut_ms / 1000;
 	wait.tv_usec = (TimeOut_ms % 1000) * 1000;
 
 	int n = select(FD_SETSIZE, &read_fdset, NULL, NULL, &wait);

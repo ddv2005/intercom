@@ -110,24 +110,34 @@ void* pjs_arduino_controller::thread_proc()
 	pj_timestamp last_temp_time;
 	pj_timestamp last_response_time;
 	pj_timestamp open_time;
+	pj_timestamp last_check_time;
 	bool has_temp_sensor = true;
 	just_opened = false;
 
-	last_temp_time.u64 = 0;
+	last_check_time.u64 = last_temp_time.u64 = 0;
 	PJ_LOG_( INFO_LEVEL,(__FILE__,"arduino controller thread start"));
 	while(!m_exit)
 	{
 		if(serial)
-			if(!serial->IsSerialAlive())
+		{
+			pj_timestamp now;
+			pj_get_timestamp(&now);
+
+			if(pj_elapsed_msec(&last_check_time,&now)>=1000)
 			{
-				m_lock->acquire();
-				PJ_LOG_( ERROR_LEVEL,(__FILE__,"serial port %s is closed",config.port));
-				serial->Close();
-				delete serial;
-				serial = NULL;
-				m_event.wait(1000);
-				m_lock->release();
+				last_check_time.u64 = now.u64;
+				if(!serial->IsSerialAlive())
+				{
+					m_lock->acquire();
+					PJ_LOG_( ERROR_LEVEL,(__FILE__,"serial port %s is closed",config.port));
+					serial->Close();
+					delete serial;
+					serial = NULL;
+					m_event.wait(1000);
+					m_lock->release();
+				}
 			}
+		}
 		if(!serial)
 		{
 			m_lock->acquire();
@@ -279,6 +289,8 @@ void* pjs_arduino_controller::thread_proc()
 							}
 						}
 					}
+					else
+						m_event.wait(1);
 				}
 				else
 					parser.reset();

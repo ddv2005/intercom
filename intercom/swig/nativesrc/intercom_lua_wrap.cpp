@@ -1638,41 +1638,44 @@ SWIG_Lua_dostring(lua_State *L, const char* str) {
 
 /* -------- TYPES TABLE (BEGIN) -------- */
 
-#define SWIGTYPE_p_char swig_types[0]
-#define SWIGTYPE_p_int swig_types[1]
-#define SWIGTYPE_p_long_long swig_types[2]
-#define SWIGTYPE_p_p_pjs_intercom_message_t swig_types[3]
-#define SWIGTYPE_p_pj_timestamp swig_types[4]
-#define SWIGTYPE_p_pjs_account_config_t swig_types[5]
-#define SWIGTYPE_p_pjs_accounts_config_t swig_types[6]
-#define SWIGTYPE_p_pjs_call_info_t swig_types[7]
-#define SWIGTYPE_p_pjs_call_script_interface swig_types[8]
-#define SWIGTYPE_p_pjs_config_t swig_types[9]
-#define SWIGTYPE_p_pjs_controller_config_t swig_types[10]
-#define SWIGTYPE_p_pjs_external_controller swig_types[11]
-#define SWIGTYPE_p_pjs_intercom_message_queue swig_types[12]
-#define SWIGTYPE_p_pjs_intercom_message_t swig_types[13]
-#define SWIGTYPE_p_pjs_intercom_script_interface swig_types[14]
-#define SWIGTYPE_p_pjs_listT_pjs_intercom_message_t_t swig_types[15]
-#define SWIGTYPE_p_pjs_log_config_t swig_types[16]
-#define SWIGTYPE_p_pjs_lua_utils swig_types[17]
-#define SWIGTYPE_p_pjs_network_config_t swig_types[18]
-#define SWIGTYPE_p_pjs_script_config_t swig_types[19]
-#define SWIGTYPE_p_pjs_script_interface swig_types[20]
-#define SWIGTYPE_p_pjs_sound_config_t swig_types[21]
-#define SWIGTYPE_p_pjs_sound_subsystem_config_t swig_types[22]
-#define SWIGTYPE_p_pjs_system_config_t swig_types[23]
-#define SWIGTYPE_p_pjs_vr swig_types[24]
-#define SWIGTYPE_p_pjsip_inv_state swig_types[25]
-#define SWIGTYPE_p_short swig_types[26]
-#define SWIGTYPE_p_std__string swig_types[27]
-#define SWIGTYPE_p_unsigned_char swig_types[28]
-#define SWIGTYPE_p_unsigned_int swig_types[29]
-#define SWIGTYPE_p_unsigned_long_long swig_types[30]
-#define SWIGTYPE_p_unsigned_short swig_types[31]
-#define SWIGTYPE_p_void swig_types[32]
-static swig_type_info *swig_types[34];
-static swig_module_info swig_module = {swig_types, 33, 0, 0, 0, 0};
+#define SWIGTYPE_p_FILE swig_types[0]
+#define SWIGTYPE_p_char swig_types[1]
+#define SWIGTYPE_p_int swig_types[2]
+#define SWIGTYPE_p_libconfig__Config swig_types[3]
+#define SWIGTYPE_p_libconfig__Setting swig_types[4]
+#define SWIGTYPE_p_long_long swig_types[5]
+#define SWIGTYPE_p_p_pjs_intercom_message_t swig_types[6]
+#define SWIGTYPE_p_pj_timestamp swig_types[7]
+#define SWIGTYPE_p_pjs_account_config_t swig_types[8]
+#define SWIGTYPE_p_pjs_accounts_config_t swig_types[9]
+#define SWIGTYPE_p_pjs_call_info_t swig_types[10]
+#define SWIGTYPE_p_pjs_call_script_interface swig_types[11]
+#define SWIGTYPE_p_pjs_config_t swig_types[12]
+#define SWIGTYPE_p_pjs_controller_config_t swig_types[13]
+#define SWIGTYPE_p_pjs_external_controller swig_types[14]
+#define SWIGTYPE_p_pjs_intercom_message_queue swig_types[15]
+#define SWIGTYPE_p_pjs_intercom_message_t swig_types[16]
+#define SWIGTYPE_p_pjs_intercom_script_interface swig_types[17]
+#define SWIGTYPE_p_pjs_listT_pjs_intercom_message_t_t swig_types[18]
+#define SWIGTYPE_p_pjs_log_config_t swig_types[19]
+#define SWIGTYPE_p_pjs_lua_utils swig_types[20]
+#define SWIGTYPE_p_pjs_network_config_t swig_types[21]
+#define SWIGTYPE_p_pjs_script_config_t swig_types[22]
+#define SWIGTYPE_p_pjs_script_interface swig_types[23]
+#define SWIGTYPE_p_pjs_sound_config_t swig_types[24]
+#define SWIGTYPE_p_pjs_sound_subsystem_config_t swig_types[25]
+#define SWIGTYPE_p_pjs_system_config_t swig_types[26]
+#define SWIGTYPE_p_pjs_vr swig_types[27]
+#define SWIGTYPE_p_pjsip_inv_state swig_types[28]
+#define SWIGTYPE_p_short swig_types[29]
+#define SWIGTYPE_p_std__string swig_types[30]
+#define SWIGTYPE_p_unsigned_char swig_types[31]
+#define SWIGTYPE_p_unsigned_int swig_types[32]
+#define SWIGTYPE_p_unsigned_long_long swig_types[33]
+#define SWIGTYPE_p_unsigned_short swig_types[34]
+#define SWIGTYPE_p_void swig_types[35]
+static swig_type_info *swig_types[37];
+static swig_module_info swig_module = {swig_types, 36, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -1864,7 +1867,7 @@ SWIGINTERN int SWIG_lua_isnilstring(lua_State *L, int idx) {
 #include "../../pjs_intercom_script_interface.h"
 #include "../../pjs_lua_libs.h"
 #include "../../pjs_vr.h"
-
+#include "../../libconfig/libconfig.hpp"
 
 
 int encode(lua_State*L);
@@ -7851,6 +7854,1177 @@ static swig_lua_class *swig_pjs_vr_bases[] = {0};
 static const char *swig_pjs_vr_base_names[] = {0};
 static swig_lua_class _wrap_class_pjs_vr = { "pjs_vr", &SWIGTYPE_p_pjs_vr,0,0, swig_pjs_vr_methods, swig_pjs_vr_attributes, swig_pjs_vr_bases, swig_pjs_vr_base_names };
 
+static int _wrap_Setting_getType(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  libconfig::Setting::Type result;
+  
+  SWIG_check_num_args("libconfig::Setting::getType",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getType",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getType",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (libconfig::Setting::Type)((libconfig::Setting const *)arg1)->getType();
+  lua_pushnumber(L, (lua_Number)(int)(result)); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getFormat(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  libconfig::Setting::Format result;
+  
+  SWIG_check_num_args("libconfig::Setting::getFormat",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getFormat",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getFormat",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (libconfig::Setting::Format)((libconfig::Setting const *)arg1)->getFormat();
+  lua_pushnumber(L, (lua_Number)(int)(result)); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_setFormat(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  libconfig::Setting::Format arg2 ;
+  
+  SWIG_check_num_args("libconfig::Setting::setFormat",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::setFormat",1,"libconfig::Setting *");
+  if(!lua_isnumber(L,2)) SWIG_fail_arg("libconfig::Setting::setFormat",2,"libconfig::Setting::Format");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_setFormat",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  arg2 = (libconfig::Setting::Format)(int)lua_tonumber(L, 2);
+  (arg1)->setFormat(arg2);
+  
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_settingsByKey(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  char *arg2 = (char *) 0 ;
+  libconfig::Setting *result = 0 ;
+  
+  SWIG_check_num_args("libconfig::Setting::settingsByKey",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::settingsByKey",1,"libconfig::Setting const *");
+  if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Setting::settingsByKey",2,"char const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_settingsByKey",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  arg2 = (char *)lua_tostring(L, 2);
+  result = (libconfig::Setting *)((libconfig::Setting const *)arg1)->settingsByKey((char const *)arg2);
+  SWIG_NewPointerObj(L,result,SWIGTYPE_p_libconfig__Setting,0); SWIG_arg++; 
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_settingsByIndex(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  int arg2 ;
+  libconfig::Setting *result = 0 ;
+  
+  SWIG_check_num_args("libconfig::Setting::settingsByIndex",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::settingsByIndex",1,"libconfig::Setting const *");
+  if(!lua_isnumber(L,2)) SWIG_fail_arg("libconfig::Setting::settingsByIndex",2,"int");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_settingsByIndex",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  arg2 = (int)lua_tonumber(L, 2);
+  result = (libconfig::Setting *)((libconfig::Setting const *)arg1)->settingsByIndex(arg2);
+  SWIG_NewPointerObj(L,result,SWIGTYPE_p_libconfig__Setting,0); SWIG_arg++; 
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getValueAsBool(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  char *arg2 = (char *) 0 ;
+  bool result;
+  
+  SWIG_check_num_args("libconfig::Setting::getValueAsBool",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getValueAsBool",1,"libconfig::Setting const *");
+  if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Setting::getValueAsBool",2,"char const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getValueAsBool",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  arg2 = (char *)lua_tostring(L, 2);
+  result = (bool)((libconfig::Setting const *)arg1)->getValueAsBool((char const *)arg2);
+  lua_pushboolean(L,(int)(result!=0)); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getValueAsInt(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  char *arg2 = (char *) 0 ;
+  int result;
+  
+  SWIG_check_num_args("libconfig::Setting::getValueAsInt",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getValueAsInt",1,"libconfig::Setting const *");
+  if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Setting::getValueAsInt",2,"char const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getValueAsInt",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  arg2 = (char *)lua_tostring(L, 2);
+  result = (int)((libconfig::Setting const *)arg1)->getValueAsInt((char const *)arg2);
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getValueAsLongLong(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  char *arg2 = (char *) 0 ;
+  long long result;
+  
+  SWIG_check_num_args("libconfig::Setting::getValueAsLongLong",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getValueAsLongLong",1,"libconfig::Setting const *");
+  if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Setting::getValueAsLongLong",2,"char const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getValueAsLongLong",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  arg2 = (char *)lua_tostring(L, 2);
+  result = (long long)((libconfig::Setting const *)arg1)->getValueAsLongLong((char const *)arg2);
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getValueAsFloat(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  char *arg2 = (char *) 0 ;
+  float result;
+  
+  SWIG_check_num_args("libconfig::Setting::getValueAsFloat",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getValueAsFloat",1,"libconfig::Setting const *");
+  if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Setting::getValueAsFloat",2,"char const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getValueAsFloat",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  arg2 = (char *)lua_tostring(L, 2);
+  result = (float)((libconfig::Setting const *)arg1)->getValueAsFloat((char const *)arg2);
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getValueAsString(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  char *arg2 = (char *) 0 ;
+  std::string result;
+  
+  SWIG_check_num_args("libconfig::Setting::getValueAsString",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getValueAsString",1,"libconfig::Setting const *");
+  if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Setting::getValueAsString",2,"char const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getValueAsString",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  arg2 = (char *)lua_tostring(L, 2);
+  result = ((libconfig::Setting const *)arg1)->getValueAsString((char const *)arg2);
+  lua_pushlstring(L,(&result)->data(),(&result)->size()); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_exists(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  char *arg2 = (char *) 0 ;
+  bool result;
+  
+  SWIG_check_num_args("libconfig::Setting::exists",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::exists",1,"libconfig::Setting const *");
+  if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Setting::exists",2,"char const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_exists",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  arg2 = (char *)lua_tostring(L, 2);
+  result = (bool)((libconfig::Setting const *)arg1)->exists((char const *)arg2);
+  lua_pushboolean(L,(int)(result!=0)); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getLength(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  int result;
+  
+  SWIG_check_num_args("libconfig::Setting::getLength",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getLength",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getLength",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (int)((libconfig::Setting const *)arg1)->getLength();
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getName(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  std::string result;
+  
+  SWIG_check_num_args("libconfig::Setting::getName",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getName",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getName",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = ((libconfig::Setting const *)arg1)->getName();
+  lua_pushlstring(L,(&result)->data(),(&result)->size()); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getPath(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  std::string result;
+  
+  SWIG_check_num_args("libconfig::Setting::getPath",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getPath",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getPath",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = ((libconfig::Setting const *)arg1)->getPath();
+  lua_pushlstring(L,(&result)->data(),(&result)->size()); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getIndex(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  int result;
+  
+  SWIG_check_num_args("libconfig::Setting::getIndex",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getIndex",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getIndex",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (int)((libconfig::Setting const *)arg1)->getIndex();
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getParent__SWIG_0(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  libconfig::Setting *result = 0 ;
+  
+  SWIG_check_num_args("libconfig::Setting::getParent",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getParent",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getParent",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (libconfig::Setting *)((libconfig::Setting const *)arg1)->getParent();
+  SWIG_NewPointerObj(L,result,SWIGTYPE_p_libconfig__Setting,0); SWIG_arg++; 
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getParent__SWIG_1(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  libconfig::Setting *result = 0 ;
+  
+  SWIG_check_num_args("libconfig::Setting::getParent",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getParent",1,"libconfig::Setting *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getParent",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (libconfig::Setting *)(arg1)->getParent();
+  SWIG_NewPointerObj(L,result,SWIGTYPE_p_libconfig__Setting,0); SWIG_arg++; 
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getParent(lua_State* L) {
+  int argc;
+  int argv[2]={
+    1,2
+  };
+  
+  argc = lua_gettop(L);
+  if (argc == 1) {
+    int _v;
+    {
+      void *ptr;
+      if (SWIG_isptrtype(L,argv[0])==0 || SWIG_ConvertPtr(L,argv[0], (void **) &ptr, SWIGTYPE_p_libconfig__Setting, 0)) {
+        _v = 0;
+      } else {
+        _v = 1;
+      }
+    }
+    if (_v) {
+      return _wrap_Setting_getParent__SWIG_1(L);
+    }
+  }
+  if (argc == 1) {
+    int _v;
+    {
+      void *ptr;
+      if (SWIG_isptrtype(L,argv[0])==0 || SWIG_ConvertPtr(L,argv[0], (void **) &ptr, SWIGTYPE_p_libconfig__Setting, 0)) {
+        _v = 0;
+      } else {
+        _v = 1;
+      }
+    }
+    if (_v) {
+      return _wrap_Setting_getParent__SWIG_0(L);
+    }
+  }
+  
+  lua_pushstring(L,"Wrong arguments for overloaded function 'Setting_getParent'\n"
+    "  Possible C/C++ prototypes are:\n"
+    "    libconfig::Setting::getParent() const\n"
+    "    libconfig::Setting::getParent()\n");
+  lua_error(L);return 0;
+}
+
+
+static int _wrap_Setting_isRoot(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  bool result;
+  
+  SWIG_check_num_args("libconfig::Setting::isRoot",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::isRoot",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_isRoot",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (bool)((libconfig::Setting const *)arg1)->isRoot();
+  lua_pushboolean(L,(int)(result!=0)); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_isGroup(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  bool result;
+  
+  SWIG_check_num_args("libconfig::Setting::isGroup",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::isGroup",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_isGroup",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (bool)((libconfig::Setting const *)arg1)->isGroup();
+  lua_pushboolean(L,(int)(result!=0)); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_isArray(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  bool result;
+  
+  SWIG_check_num_args("libconfig::Setting::isArray",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::isArray",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_isArray",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (bool)((libconfig::Setting const *)arg1)->isArray();
+  lua_pushboolean(L,(int)(result!=0)); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_isList(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  bool result;
+  
+  SWIG_check_num_args("libconfig::Setting::isList",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::isList",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_isList",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (bool)((libconfig::Setting const *)arg1)->isList();
+  lua_pushboolean(L,(int)(result!=0)); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_isAggregate(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  bool result;
+  
+  SWIG_check_num_args("libconfig::Setting::isAggregate",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::isAggregate",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_isAggregate",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (bool)((libconfig::Setting const *)arg1)->isAggregate();
+  lua_pushboolean(L,(int)(result!=0)); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_isScalar(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  bool result;
+  
+  SWIG_check_num_args("libconfig::Setting::isScalar",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::isScalar",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_isScalar",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (bool)((libconfig::Setting const *)arg1)->isScalar();
+  lua_pushboolean(L,(int)(result!=0)); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_isNumber(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  bool result;
+  
+  SWIG_check_num_args("libconfig::Setting::isNumber",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::isNumber",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_isNumber",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (bool)((libconfig::Setting const *)arg1)->isNumber();
+  lua_pushboolean(L,(int)(result!=0)); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getSourceLine(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  unsigned int result;
+  
+  SWIG_check_num_args("libconfig::Setting::getSourceLine",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getSourceLine",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getSourceLine",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = (unsigned int)((libconfig::Setting const *)arg1)->getSourceLine();
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Setting_getSourceFile(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
+  std::string result;
+  
+  SWIG_check_num_args("libconfig::Setting::getSourceFile",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getSourceFile",1,"libconfig::Setting const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
+    SWIG_fail_ptr("Setting_getSourceFile",1,SWIGTYPE_p_libconfig__Setting);
+  }
+  
+  result = ((libconfig::Setting const *)arg1)->getSourceFile();
+  lua_pushlstring(L,(&result)->data(),(&result)->size()); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static void swig_delete_Setting(void *obj) {
+libconfig::Setting *arg1 = (libconfig::Setting *) obj;
+delete arg1;
+}
+static swig_lua_method swig_libconfig_Setting_methods[] = {
+    {"getType", _wrap_Setting_getType}, 
+    {"getFormat", _wrap_Setting_getFormat}, 
+    {"setFormat", _wrap_Setting_setFormat}, 
+    {"settingsByKey", _wrap_Setting_settingsByKey}, 
+    {"settingsByIndex", _wrap_Setting_settingsByIndex}, 
+    {"getValueAsBool", _wrap_Setting_getValueAsBool}, 
+    {"getValueAsInt", _wrap_Setting_getValueAsInt}, 
+    {"getValueAsLongLong", _wrap_Setting_getValueAsLongLong}, 
+    {"getValueAsFloat", _wrap_Setting_getValueAsFloat}, 
+    {"getValueAsString", _wrap_Setting_getValueAsString}, 
+    {"exists", _wrap_Setting_exists}, 
+    {"getLength", _wrap_Setting_getLength}, 
+    {"getName", _wrap_Setting_getName}, 
+    {"getPath", _wrap_Setting_getPath}, 
+    {"getIndex", _wrap_Setting_getIndex}, 
+    {"getParent", _wrap_Setting_getParent}, 
+    {"isRoot", _wrap_Setting_isRoot}, 
+    {"isGroup", _wrap_Setting_isGroup}, 
+    {"isArray", _wrap_Setting_isArray}, 
+    {"isList", _wrap_Setting_isList}, 
+    {"isAggregate", _wrap_Setting_isAggregate}, 
+    {"isScalar", _wrap_Setting_isScalar}, 
+    {"isNumber", _wrap_Setting_isNumber}, 
+    {"getSourceLine", _wrap_Setting_getSourceLine}, 
+    {"getSourceFile", _wrap_Setting_getSourceFile}, 
+    {0,0}
+};
+static swig_lua_attribute swig_libconfig_Setting_attributes[] = {
+    {0,0,0}
+};
+static swig_lua_class *swig_libconfig_Setting_bases[] = {0};
+static const char *swig_libconfig_Setting_base_names[] = {0};
+static swig_lua_class _wrap_class_libconfig_Setting = { "Setting", &SWIGTYPE_p_libconfig__Setting,0, swig_delete_Setting, swig_libconfig_Setting_methods, swig_libconfig_Setting_attributes, swig_libconfig_Setting_bases, swig_libconfig_Setting_base_names };
+
+static int _wrap_new_Config(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *result = 0 ;
+  
+  SWIG_check_num_args("libconfig::Config::Config",0,0)
+  result = (libconfig::Config *)new libconfig::Config();
+  SWIG_NewPointerObj(L,result,SWIGTYPE_p_libconfig__Config,1); SWIG_arg++; 
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_setAutoConvert(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  bool arg2 ;
+  
+  SWIG_check_num_args("libconfig::Config::setAutoConvert",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::setAutoConvert",1,"libconfig::Config *");
+  if(!lua_isboolean(L,2)) SWIG_fail_arg("libconfig::Config::setAutoConvert",2,"bool");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_setAutoConvert",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  arg2 = (lua_toboolean(L, 2)!=0);
+  (arg1)->setAutoConvert(arg2);
+  
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_getAutoConvert(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  bool result;
+  
+  SWIG_check_num_args("libconfig::Config::getAutoConvert",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::getAutoConvert",1,"libconfig::Config const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_getAutoConvert",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  result = (bool)((libconfig::Config const *)arg1)->getAutoConvert();
+  lua_pushboolean(L,(int)(result!=0)); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_setDefaultFormat(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  libconfig::Setting::Format arg2 ;
+  
+  SWIG_check_num_args("libconfig::Config::setDefaultFormat",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::setDefaultFormat",1,"libconfig::Config *");
+  if(!lua_isnumber(L,2)) SWIG_fail_arg("libconfig::Config::setDefaultFormat",2,"libconfig::Setting::Format");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_setDefaultFormat",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  arg2 = (libconfig::Setting::Format)(int)lua_tonumber(L, 2);
+  (arg1)->setDefaultFormat(arg2);
+  
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_getDefaultFormat(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  libconfig::Setting::Format result;
+  
+  SWIG_check_num_args("libconfig::Config::getDefaultFormat",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::getDefaultFormat",1,"libconfig::Config const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_getDefaultFormat",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  result = (libconfig::Setting::Format)((libconfig::Config const *)arg1)->getDefaultFormat();
+  lua_pushnumber(L, (lua_Number)(int)(result)); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_setTabWidth(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  unsigned short arg2 ;
+  
+  SWIG_check_num_args("libconfig::Config::setTabWidth",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::setTabWidth",1,"libconfig::Config *");
+  if(!lua_isnumber(L,2)) SWIG_fail_arg("libconfig::Config::setTabWidth",2,"unsigned short");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_setTabWidth",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  SWIG_contract_assert((lua_tonumber(L,2)>=0),"number must not be negative")
+  arg2 = (unsigned short)lua_tonumber(L, 2);
+  (arg1)->setTabWidth(arg2);
+  
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_getTabWidth(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  unsigned short result;
+  
+  SWIG_check_num_args("libconfig::Config::getTabWidth",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::getTabWidth",1,"libconfig::Config const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_getTabWidth",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  result = (unsigned short)((libconfig::Config const *)arg1)->getTabWidth();
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_setIncludeDir(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  char *arg2 = (char *) 0 ;
+  
+  SWIG_check_num_args("libconfig::Config::setIncludeDir",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::setIncludeDir",1,"libconfig::Config *");
+  if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Config::setIncludeDir",2,"char const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_setIncludeDir",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  arg2 = (char *)lua_tostring(L, 2);
+  (arg1)->setIncludeDir((char const *)arg2);
+  
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_getIncludeDir(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  char *result = 0 ;
+  
+  SWIG_check_num_args("libconfig::Config::getIncludeDir",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::getIncludeDir",1,"libconfig::Config const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_getIncludeDir",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  result = (char *)((libconfig::Config const *)arg1)->getIncludeDir();
+  lua_pushstring(L,(const char *)result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_read(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  FILE *arg2 = (FILE *) 0 ;
+  libconfig::result_t result;
+  
+  SWIG_check_num_args("libconfig::Config::read",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::read",1,"libconfig::Config *");
+  if(!SWIG_isptrtype(L,2)) SWIG_fail_arg("libconfig::Config::read",2,"FILE *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_read",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,2,(void**)&arg2,SWIGTYPE_p_FILE,0))){
+    SWIG_fail_ptr("Config_read",2,SWIGTYPE_p_FILE);
+  }
+  
+  result = (libconfig::result_t)(arg1)->read(arg2);
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_write(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  FILE *arg2 = (FILE *) 0 ;
+  libconfig::result_t result;
+  
+  SWIG_check_num_args("libconfig::Config::write",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::write",1,"libconfig::Config const *");
+  if(!SWIG_isptrtype(L,2)) SWIG_fail_arg("libconfig::Config::write",2,"FILE *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_write",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,2,(void**)&arg2,SWIGTYPE_p_FILE,0))){
+    SWIG_fail_ptr("Config_write",2,SWIGTYPE_p_FILE);
+  }
+  
+  result = (libconfig::result_t)((libconfig::Config const *)arg1)->write(arg2);
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_readString(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  char *arg2 = (char *) 0 ;
+  libconfig::result_t result;
+  
+  SWIG_check_num_args("libconfig::Config::readString",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::readString",1,"libconfig::Config *");
+  if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Config::readString",2,"char const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_readString",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  arg2 = (char *)lua_tostring(L, 2);
+  result = (libconfig::result_t)(arg1)->readString((char const *)arg2);
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_readFile(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  char *arg2 = (char *) 0 ;
+  libconfig::result_t result;
+  
+  SWIG_check_num_args("libconfig::Config::readFile",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::readFile",1,"libconfig::Config *");
+  if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Config::readFile",2,"char const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_readFile",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  arg2 = (char *)lua_tostring(L, 2);
+  result = (libconfig::result_t)(arg1)->readFile((char const *)arg2);
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_writeFile(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  char *arg2 = (char *) 0 ;
+  libconfig::result_t result;
+  
+  SWIG_check_num_args("libconfig::Config::writeFile",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::writeFile",1,"libconfig::Config *");
+  if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Config::writeFile",2,"char const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_writeFile",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  arg2 = (char *)lua_tostring(L, 2);
+  result = (libconfig::result_t)(arg1)->writeFile((char const *)arg2);
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_getRoot(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  libconfig::Setting *result = 0 ;
+  
+  SWIG_check_num_args("libconfig::Config::getRoot",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::getRoot",1,"libconfig::Config const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_getRoot",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  result = (libconfig::Setting *) &((libconfig::Config const *)arg1)->getRoot();
+  SWIG_NewPointerObj(L,result,SWIGTYPE_p_libconfig__Setting,0); SWIG_arg++; 
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_Config_getError(lua_State* L) {
+  int SWIG_arg = 0;
+  libconfig::Config *arg1 = (libconfig::Config *) 0 ;
+  std::string *result = 0 ;
+  
+  SWIG_check_num_args("libconfig::Config::getError",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Config::getError",1,"libconfig::Config const *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Config,0))){
+    SWIG_fail_ptr("Config_getError",1,SWIGTYPE_p_libconfig__Config);
+  }
+  
+  result = (std::string *) &((libconfig::Config const *)arg1)->getError();
+  lua_pushlstring(L,result->data(),result->size()); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static void swig_delete_Config(void *obj) {
+libconfig::Config *arg1 = (libconfig::Config *) obj;
+delete arg1;
+}
+static swig_lua_method swig_libconfig_Config_methods[] = {
+    {"setAutoConvert", _wrap_Config_setAutoConvert}, 
+    {"getAutoConvert", _wrap_Config_getAutoConvert}, 
+    {"setDefaultFormat", _wrap_Config_setDefaultFormat}, 
+    {"getDefaultFormat", _wrap_Config_getDefaultFormat}, 
+    {"setTabWidth", _wrap_Config_setTabWidth}, 
+    {"getTabWidth", _wrap_Config_getTabWidth}, 
+    {"setIncludeDir", _wrap_Config_setIncludeDir}, 
+    {"getIncludeDir", _wrap_Config_getIncludeDir}, 
+    {"read", _wrap_Config_read}, 
+    {"write", _wrap_Config_write}, 
+    {"readString", _wrap_Config_readString}, 
+    {"readFile", _wrap_Config_readFile}, 
+    {"writeFile", _wrap_Config_writeFile}, 
+    {"getRoot", _wrap_Config_getRoot}, 
+    {"getError", _wrap_Config_getError}, 
+    {0,0}
+};
+static swig_lua_attribute swig_libconfig_Config_attributes[] = {
+    {0,0,0}
+};
+static swig_lua_class *swig_libconfig_Config_bases[] = {0};
+static const char *swig_libconfig_Config_base_names[] = {0};
+static swig_lua_class _wrap_class_libconfig_Config = { "Config", &SWIGTYPE_p_libconfig__Config,_wrap_new_Config, swig_delete_Config, swig_libconfig_Config_methods, swig_libconfig_Config_attributes, swig_libconfig_Config_bases, swig_libconfig_Config_base_names };
+
 #ifdef __cplusplus
 }
 #endif
@@ -7900,6 +9074,21 @@ static swig_lua_const_info swig_constants[] = {
     {SWIG_LUA_CONSTTAB_INT("VRS_IDLE", 0)},
     {SWIG_LUA_CONSTTAB_INT("VRS_PLAY_FILE", 1)},
     {SWIG_LUA_CONSTTAB_INT("VRS_WAIT_INPUT", 2)},
+    {SWIG_LUA_CONSTTAB_INT("LCSR_OK", 0)},
+    {SWIG_LUA_CONSTTAB_INT("LCSR_ERR_IO", -1)},
+    {SWIG_LUA_CONSTTAB_INT("LCSR_ERR_PARSE", -2)},
+    {SWIG_LUA_CONSTTAB_INT("LCSR_ERR_UNKNOWN", -100)},
+    {SWIG_LUA_CONSTTAB_INT("Setting_TypeNone", libconfig::Setting::TypeNone)},
+    {SWIG_LUA_CONSTTAB_INT("Setting_TypeInt", libconfig::Setting::TypeInt)},
+    {SWIG_LUA_CONSTTAB_INT("Setting_TypeInt64", libconfig::Setting::TypeInt64)},
+    {SWIG_LUA_CONSTTAB_INT("Setting_TypeFloat", libconfig::Setting::TypeFloat)},
+    {SWIG_LUA_CONSTTAB_INT("Setting_TypeString", libconfig::Setting::TypeString)},
+    {SWIG_LUA_CONSTTAB_INT("Setting_TypeBoolean", libconfig::Setting::TypeBoolean)},
+    {SWIG_LUA_CONSTTAB_INT("Setting_TypeGroup", libconfig::Setting::TypeGroup)},
+    {SWIG_LUA_CONSTTAB_INT("Setting_TypeArray", libconfig::Setting::TypeArray)},
+    {SWIG_LUA_CONSTTAB_INT("Setting_TypeList", libconfig::Setting::TypeList)},
+    {SWIG_LUA_CONSTTAB_INT("Setting_FormatDefault", libconfig::Setting::FormatDefault)},
+    {SWIG_LUA_CONSTTAB_INT("Setting_FormatHex", libconfig::Setting::FormatHex)},
     {0,0,0,0,0,0}
 };
 
@@ -7911,8 +9100,11 @@ static void *_p_pjs_intercom_message_queueTo_p_pjs_listT_pjs_intercom_message_t_
 static void *_p_pjs_call_script_interfaceTo_p_pjs_script_interface(void *x, int *SWIGUNUSEDPARM(newmemory)) {
     return (void *)((pjs_script_interface *)  ((pjs_call_script_interface *) x));
 }
+static swig_type_info _swigt__p_FILE = {"_p_FILE", "FILE *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *|pj_char_t *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_int = {"_p_int", "pj_bool_t *|int *|pj_int32_t *|pjs_vr_async_param_t *|pj_status_t *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_int = {"_p_int", "pj_bool_t *|int *|pj_int32_t *|pjs_vr_async_param_t *|libconfig::result_t *|pj_status_t *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_libconfig__Config = {"_p_libconfig__Config", "libconfig::Config *", 0, 0, (void*)&_wrap_class_libconfig_Config, 0};
+static swig_type_info _swigt__p_libconfig__Setting = {"_p_libconfig__Setting", "libconfig::Setting *", 0, 0, (void*)&_wrap_class_libconfig_Setting, 0};
 static swig_type_info _swigt__p_long_long = {"_p_long_long", "pj_int64_t *|long long *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_pjs_intercom_message_t = {"_p_p_pjs_intercom_message_t", "pjs_intercom_message_t **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_pj_timestamp = {"_p_pj_timestamp", "pj_timestamp *", 0, 0, (void*)0, 0};
@@ -7946,8 +9138,11 @@ static swig_type_info _swigt__p_unsigned_short = {"_p_unsigned_short", "unsigned
 static swig_type_info _swigt__p_void = {"_p_void", "void *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
+  &_swigt__p_FILE,
   &_swigt__p_char,
   &_swigt__p_int,
+  &_swigt__p_libconfig__Config,
+  &_swigt__p_libconfig__Setting,
   &_swigt__p_long_long,
   &_swigt__p_p_pjs_intercom_message_t,
   &_swigt__p_pj_timestamp,
@@ -7981,8 +9176,11 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_void,
 };
 
+static swig_cast_info _swigc__p_FILE[] = {  {&_swigt__p_FILE, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_libconfig__Config[] = {  {&_swigt__p_libconfig__Config, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_libconfig__Setting[] = {  {&_swigt__p_libconfig__Setting, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_long_long[] = {  {&_swigt__p_long_long, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_pjs_intercom_message_t[] = {  {&_swigt__p_p_pjs_intercom_message_t, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_pj_timestamp[] = {  {&_swigt__p_pj_timestamp, 0, 0, 0},{0, 0, 0, 0}};
@@ -8016,8 +9214,11 @@ static swig_cast_info _swigc__p_unsigned_short[] = {  {&_swigt__p_unsigned_short
 static swig_cast_info _swigc__p_void[] = {  {&_swigt__p_void, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
+  _swigc__p_FILE,
   _swigc__p_char,
   _swigc__p_int,
+  _swigc__p_libconfig__Config,
+  _swigc__p_libconfig__Setting,
   _swigc__p_long_long,
   _swigc__p_p_pjs_intercom_message_t,
   _swigc__p_pj_timestamp,
