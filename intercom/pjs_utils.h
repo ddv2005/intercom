@@ -3,8 +3,7 @@
 #include "project_common.h"
 #include <pthread.h>
 #include <list>
-
-
+using namespace std;
 class pjs_event
 {
 protected:
@@ -24,47 +23,50 @@ public:
 		pthread_cond_destroy(&m_cond);
 	}
 
-	void wait() {
-	     pthread_mutex_lock(&m_mutex);
-	     while (!m_triggered)
-	         pthread_cond_wait(&m_cond, &m_mutex);
-	     m_triggered = false;
-	     pthread_mutex_unlock(&m_mutex);
+	void wait()
+	{
+		pthread_mutex_lock(&m_mutex);
+		while (!m_triggered)
+			pthread_cond_wait(&m_cond, &m_mutex);
+		m_triggered = false;
+		pthread_mutex_unlock(&m_mutex);
 	}
 
-	int wait(pj_int32_t timeout) {
-	     pthread_mutex_lock(&m_mutex);
-	     struct timespec abs_time;
-	     struct timeval now;
+	int wait(pj_int32_t timeout)
+	{
+		pthread_mutex_lock(&m_mutex);
+		struct timespec abs_time;
+		struct timeval now;
 
-	     gettimeofday(&now,NULL);
-	     abs_time.tv_nsec = (now.tv_usec+1000UL*(timeout%1000))*1000UL;
-	     abs_time.tv_sec = now.tv_sec+timeout/1000+abs_time.tv_nsec/1000000000UL;
-	     abs_time.tv_nsec %= 1000000000UL;
+		gettimeofday(&now, NULL);
+		abs_time.tv_nsec = (now.tv_usec + 1000UL * (timeout % 1000)) * 1000UL;
+		abs_time.tv_sec = now.tv_sec + timeout / 1000
+				+ abs_time.tv_nsec / 1000000000UL;
+		abs_time.tv_nsec %= 1000000000UL;
 
-	     int err = 0;
-	     while (!m_triggered)
-	     {
-	         err = pthread_cond_timedwait(&m_cond, &m_mutex,&abs_time);
-	         if(err == 0 || err == ETIMEDOUT)
-	        	 break;
-	         if(err==EINVAL)
-	        	 abort();
-	     }
-	     if(!err)
-	    	 m_triggered = false;
-	     pthread_mutex_unlock(&m_mutex);
-	     return err;
+		int err = 0;
+		while (!m_triggered)
+		{
+			err = pthread_cond_timedwait(&m_cond, &m_mutex, &abs_time);
+			if (err == 0 || err == ETIMEDOUT)
+				break;
+			if (err == EINVAL)
+				abort();
+		}
+		if (!err)
+			m_triggered = false;
+		pthread_mutex_unlock(&m_mutex);
+		return err;
 	}
 
-	void signal() {
-	    pthread_mutex_lock(&m_mutex);
-	    m_triggered = true;
-	    pthread_cond_signal(&m_cond);
-	    pthread_mutex_unlock(&m_mutex);
+	void signal()
+	{
+		pthread_mutex_lock(&m_mutex);
+		m_triggered = true;
+		pthread_cond_signal(&m_cond);
+		pthread_mutex_unlock(&m_mutex);
 	}
 };
-
 
 class pjs_shared_event
 {
@@ -83,38 +85,42 @@ public:
 		pthread_cond_destroy(&m_cond);
 	}
 
-	void wait() {
-	     pthread_mutex_lock(&m_mutex);
-         pthread_cond_wait(&m_cond, &m_mutex);
-	     pthread_mutex_unlock(&m_mutex);
+	void wait()
+	{
+		pthread_mutex_lock(&m_mutex);
+		pthread_cond_wait(&m_cond, &m_mutex);
+		pthread_mutex_unlock(&m_mutex);
 	}
 
-	int wait(pj_int32_t timeout) {
-	     pthread_mutex_lock(&m_mutex);
-	     struct timespec abs_time;
-	     struct timeval now;
+	int wait(pj_int32_t timeout)
+	{
+		pthread_mutex_lock(&m_mutex);
+		struct timespec abs_time;
+		struct timeval now;
 
-	     gettimeofday(&now,NULL);
-	     abs_time.tv_nsec = (now.tv_usec+1000UL*(timeout%1000))*1000UL;
-	     abs_time.tv_sec = now.tv_sec+timeout/1000+abs_time.tv_nsec/1000000000UL;
-	     abs_time.tv_nsec %= 1000000000UL;
+		gettimeofday(&now, NULL);
+		abs_time.tv_nsec = (now.tv_usec + 1000UL * (timeout % 1000)) * 1000UL;
+		abs_time.tv_sec = now.tv_sec + timeout / 1000
+				+ abs_time.tv_nsec / 1000000000UL;
+		abs_time.tv_nsec %= 1000000000UL;
 
-	     int err = pthread_cond_timedwait(&m_cond, &m_mutex,&abs_time);
-	     pthread_mutex_unlock(&m_mutex);
-	     return err;
+		int err = pthread_cond_timedwait(&m_cond, &m_mutex, &abs_time);
+		pthread_mutex_unlock(&m_mutex);
+		return err;
 	}
 
-	void signal() {
-	    pthread_mutex_lock(&m_mutex);
-	    pthread_cond_broadcast(&m_cond);
-	    pthread_mutex_unlock(&m_mutex);
+	void signal()
+	{
+		pthread_mutex_lock(&m_mutex);
+		pthread_cond_broadcast(&m_cond);
+		pthread_mutex_unlock(&m_mutex);
 	}
 };
 
 class pjs_simple_mutex
 {
 protected:
-	pthread_mutex_t	m_lock;
+	pthread_mutex_t m_lock;
 
 	int raw_lock()
 	{
@@ -128,7 +134,7 @@ protected:
 
 	void check_error(int error)
 	{
-		if(error)
+		if (error)
 		{
 			abort();
 		}
@@ -137,7 +143,7 @@ protected:
 public:
 	pjs_simple_mutex()
 	{
-		pthread_mutex_init(&m_lock,NULL);
+		pthread_mutex_init(&m_lock, NULL);
 	}
 
 	~pjs_simple_mutex()
@@ -162,8 +168,55 @@ class pjs_simple_locker
 protected:
 	pjs_simple_mutex &m_lock;
 public:
-	pjs_simple_locker(pjs_simple_mutex &lock):m_lock(lock){m_lock.lock();}
-	~pjs_simple_locker(){m_lock.unlock();}
+	pjs_simple_locker(pjs_simple_mutex &lock) :
+			m_lock(lock)
+	{
+		m_lock.lock();
+	}
+	~pjs_simple_locker()
+	{
+		m_lock.unlock();
+	}
+};
+
+template<typename T,typename UT>
+class pjs_callback_class
+{
+protected:
+	typedef list<T*> callbacks_list_t;
+	typedef typename list<T*>::iterator callbacks_list_iterator_t;
+
+	callbacks_list_t m_callbacks;
+	pjs_simple_mutex m_callback_lock;
+
+	virtual void on_callback_fire(UT user_data)
+	{
+	}
+
+	virtual void on_callback(T* cbt, UT user_data)=0;
+public:
+	virtual ~pjs_callback_class() {}
+
+	void add_callback(T *cbt)
+	{
+		pjs_simple_locker lock(m_callback_lock);
+		m_callbacks.push_back(cbt);
+	}
+
+	void remove_callback(T *cbt)
+	{
+		pjs_simple_locker lock(m_callback_lock);
+		m_callbacks.remove(cbt);
+	}
+
+	void fire_callbacks(UT user_data)
+	{
+		pjs_simple_locker lock(m_callback_lock);
+		on_callback_fire(user_data);
+		callbacks_list_iterator_t clitr = m_callbacks.begin();
+		for (; clitr != m_callbacks.end(); clitr++)
+			on_callback((*clitr), user_data);
+	}
 };
 
 SWIG_BEGIN_DECL
@@ -171,29 +224,34 @@ template<class T>
 class pjs_list
 {
 protected:
-	unsigned int		m_max_elements;
-	pjs_simple_mutex	m_lock;
-	pjs_event			m_event;
-	std::list<T>		m_list;
+	unsigned int m_max_elements;
+	pjs_simple_mutex m_lock;
+	pjs_event m_event;
+	std::list<T> m_list;
 public:
 #ifdef SWIG
 protected:
 #endif
-	pjs_list(unsigned int	max_elements):m_max_elements(max_elements){}
-	virtual ~pjs_list() {}
+	pjs_list(unsigned int max_elements) :
+			m_max_elements(max_elements)
+	{
+	}
+	virtual ~pjs_list()
+	{
+	}
 #ifdef SWIG
 public:
 #endif
 
-	void push(T &v,bool at_front=false)
+	void push(T &v, bool at_front = false)
 	{
 		pjs_simple_locker lock(m_lock);
-		if(m_max_elements)
+		if (m_max_elements)
 		{
-			while(m_list.size()>=m_max_elements)
+			while (m_list.size() >= m_max_elements)
 				m_list.pop_front();
 		}
-		if(at_front)
+		if (at_front)
 			m_list.push_front(v);
 		else
 			m_list.push_back(v);
@@ -203,10 +261,10 @@ public:
 	bool pop(T *v)
 	{
 		bool result = false;
-		if(v)
+		if (v)
 		{
 			pjs_simple_locker lock(m_lock);
-			if(!m_list.empty())
+			if (!m_list.empty())
 			{
 				*v = m_list.front();
 				m_list.pop_front();
@@ -230,7 +288,7 @@ public:
 	int wait(pj_int32_t timeout)
 	{
 		m_lock.lock();
-		if(m_list.empty())
+		if (m_list.empty())
 		{
 			m_lock.unlock();
 			return m_event.wait(timeout);

@@ -3,6 +3,8 @@
 #include "pjs_emulator_controller.h"
 #include <unistd.h>
 #include "pjs_lua_libs.h"
+#include <pjsua-lib/pjsua_internal.h>
+#include "pjs_audio_monitor_zeromq.h"
 
 #define THIS_FILE	"pjs_intercom.cpp"
 
@@ -54,7 +56,8 @@ pjs_intercom_system::pjs_intercom_system() :
 	m_back_vr = NULL;
 	m_script_exit = false;
 	m_scripts_id = 0;
-	m_last_check_scripts.u64 = 0;
+	m_last_log_flush.u64 = m_last_check_scripts.u64 = 0;
+	m_audio_monitor = NULL;
 }
 
 pjs_intercom_system::~pjs_intercom_system()
@@ -91,7 +94,7 @@ void pjs_intercom_system::timer()
 		pj_get_timestamp(&now);
 		if (pj_elapsed_msec(&m_last_check_scripts, &now) >= 900)
 		{
-			pj_get_timestamp(&m_last_check_scripts);
+			m_last_check_scripts = now;
 			pjs_intercom_scripts_erase_list scripts_to_erase;
 			m_scripts_mutex.lock();
 			for (pjs_intercom_scripts_map_itr citr = m_scripts.begin();
@@ -123,6 +126,12 @@ void pjs_intercom_system::timer()
 				delete (*itr);
 			}
 		}
+		if (pj_elapsed_msec(&m_last_log_flush, &now) >= 10000)
+		{
+			m_last_log_flush = now;
+			pj_file_flush(pjsua_get_var()->log_file);
+		}
+
 	}
 
 	schedule_timer();
@@ -293,6 +302,20 @@ pjs_result_t pjs_intercom_system::start()
 						status = pjmedia_aud_stream_start(m_rec_stream);
 						if (status == PJ_SUCCESS)
 						{
+							if(m_config.audio_monitor.bind[0])
+							{
+								m_audio_monitor = new pjs_audio_monitor_zeromq((const char*)m_config.audio_monitor.bind,*m_global,m_config.audio_monitor.clock_rate,m_config.sound_subsystem.clock_rate,params.samples_per_frame,m_config.audio_monitor.gain_max);
+								if(!m_audio_monitor->start_monitor())
+								{
+									delete m_audio_monitor;
+									m_audio_monitor = NULL;
+								}
+							}
+							if(m_audio_monitor)
+							{
+								connect(0,m_audio_monitor->get_input2_id());
+							}
+
 							pj_get_timestamp(&m_last_check_scripts);
 							m_timer = (pj_timer_entry *) calloc(1, sizeof(*m_timer));
 							pj_timer_entry_init(m_timer, 0, this, &timer_callback_s);
@@ -341,8 +364,8 @@ pjs_result_t pjs_intercom_system::start()
 								acc_cfg.cred_info[0].data = pj_str(
 										m_config.sip_accounts.accounts[i].password);
 
-								acc_cfg.reg_retry_interval = 300;
-								acc_cfg.reg_first_retry_interval = 60;
+								acc_cfg.reg_retry_interval = 60;
+								acc_cfg.reg_first_retry_interval = 15;
 
 								if (m_config.sip_accounts.accounts[i].is_local_network)
 								{
@@ -352,6 +375,7 @@ pjs_result_t pjs_intercom_system::start()
 								{
 									acc_cfg.allow_contact_rewrite = PJ_TRUE;
 								}
+								acc_cfg.register_on_acc_add = PJ_FALSE;
 
 								status = pjsua_acc_add(&acc_cfg, PJ_TRUE, &m_acc_id[i]);
 								if (status != PJ_SUCCESS)
@@ -403,7 +427,7 @@ pjs_result_t pjs_intercom_system::start()
 							if (pjsua_conf_add_port(m_pool, m_master_vr->get_mediaport(),
 									&m_master_vr_id) == PJ_SUCCESS)
 							{
-								pjsua_conf_connect(m_master_vr_id, 0);
+								connect(m_master_vr_id, 0);
 							}
 							else
 								m_master_vr_id = 0;
@@ -415,7 +439,7 @@ pjs_result_t pjs_intercom_system::start()
 							if (pjsua_conf_add_port(m_pool, m_back_vr->get_mediaport(),
 									&m_back_vr_id) == PJ_SUCCESS)
 							{
-								pjsua_conf_connect(m_back_vr_id, 0);
+								connect(m_back_vr_id, 0);
 							}
 							else
 								m_back_vr_id = 0;
@@ -707,6 +731,13 @@ void pjs_intercom_system::clean_system()
 		delete m_controller;
 		m_controller = NULL;
 	}
+
+	if(m_audio_monitor)
+	{
+		delete m_audio_monitor;
+		m_audio_monitor = NULL;
+	}
+
 	if (m_play_stream)
 	{
 		PJ_LOG_(INFO_LEVEL, (__FILE__,"Stoping play audio stream"));
@@ -922,7 +953,7 @@ pj_status_t pjs_intercom_system::create_call(pjs_script_data_t &script_data,pjs_
 				(__FILE__,"create call %d, local: %s, inbound: %s ",(int)call_info.callid,call_info.is_local?"true":"false",call_info.is_inbound?"true":"false"));
 		m_scripts_mutex.lock();
 		pjs_intercom_call *call = new pjs_intercom_call(++m_scripts_id,(pjs_intercom_script_interface*)this,*m_global, &m_lua_global,
-				script_data,call_info, m_config.script.call_script);
+				script_data,call_info, m_config.script.call_script,*this);
 		m_scripts[m_scripts_id] = call;
 		if (m_calls.find(call_info.callid) != m_calls.end())
 		{
@@ -1081,6 +1112,33 @@ void pjs_intercom_system::on_call_media_state(pjsua_call_id call_id)
 	}
 }
 
+pj_status_t pjs_intercom_system::connect(pjsua_conf_port_id source,
+		pjsua_conf_port_id sink)
+{
+	if(m_audio_monitor)
+	{
+		if((sink==0)&&(m_audio_monitor->get_input1_id()!=source))
+		{
+			pjsua_conf_connect(source,m_audio_monitor->get_input1_id());
+		}
+	}
+	return pjsua_conf_connect(source,sink);
+}
+
+pj_status_t pjs_intercom_system::disconnect(pjsua_conf_port_id source,
+		pjsua_conf_port_id sink)
+{
+	if(m_audio_monitor)
+	{
+		if((sink==0)&&(m_audio_monitor->get_input1_id()!=source))
+		{
+			pjsua_conf_disconnect(source,m_audio_monitor->get_input1_id());
+		}
+	}
+	return pjsua_conf_disconnect(source,sink);
+}
+
+
 //========================================================
 pjs_master_port::pjs_master_port(pjs_global &global,
 		pjmedia_aud_stream *tx_stream, pjmedia_aud_stream *rx_stream,
@@ -1207,7 +1265,9 @@ pj_status_t pjs_master_port::get_frame(pjmedia_frame *frame)
 			{
 				up_frame.buf = m_rx_buffer;
 				up_frame.size = m_rx_up_port->info.samples_per_frame * 2;
+				media_sync(PJMS_GET_BEFORE);
 				status = pjmedia_port_get_frame(m_rx_up_port, &up_frame);
+				media_sync(PJMS_GET_AFTER);
 				if (status == PJ_SUCCESS)
 				{
 					frame->type = up_frame.type;
@@ -1253,7 +1313,9 @@ pj_status_t pjs_master_port::get_frame(pjmedia_frame *frame)
 		}
 		else
 		{
+			media_sync(PJMS_GET_BEFORE);
 			status = pjmedia_port_get_frame(m_rx_up_port, &up_frame);
+			media_sync(PJMS_GET_AFTER);
 			if (status == PJ_SUCCESS)
 			{
 				frame->type = up_frame.type;
@@ -1296,7 +1358,9 @@ pj_status_t pjs_master_port::put_frame(const pjmedia_frame *frame)
 
 	if (m_tx_mute)
 	{
+		media_sync(PJMS_PUT_BEFORE);
 		m_tx_power = 0;
+		media_sync(PJMS_PUT_AFTER);
 		return PJ_SUCCESS;
 	}
 	if (m_tx_resample)
@@ -1330,7 +1394,9 @@ pj_status_t pjs_master_port::put_frame(const pjmedia_frame *frame)
 				if (m_echo)
 					echo_process_c((pj_int16_t*)up_frame.buf, up_frame.size >> 1);
 
+				media_sync(PJMS_PUT_BEFORE);
 				result = pjmedia_port_put_frame(m_tx_up_port, &up_frame);
+				media_sync(PJMS_PUT_AFTER);
 			}
 			goto fexit;
 		}
@@ -1363,7 +1429,9 @@ pj_status_t pjs_master_port::put_frame(const pjmedia_frame *frame)
 		{
 			if (m_echo)
 				echo_process_c((pj_int16_t*)frame->buf, frame->size >> 1);
+			media_sync(PJMS_PUT_BEFORE);
 			result = pjmedia_port_put_frame(m_tx_up_port, frame);
+			media_sync(PJMS_PUT_AFTER);
 		}
 	}
 	fexit:
@@ -1404,7 +1472,9 @@ void* pjs_master_port::put_thread_proc()
 
 				if (m_echo)
 					echo_process_c((pj_int16_t*)buffer, frame_size);
+				media_sync(PJMS_PUT_BEFORE);
 				pjmedia_port_put_frame(m_tx_up_port, &up_frame);
+				media_sync(PJMS_PUT_AFTER);
 				last_frame_ts.u64 += frame_size;
 #ifdef DEBUG_MASTER_PORT
 				PJ_LOG_(ERROR_LEVEL,(__FILE__,"exit real put_frame"));
@@ -1470,7 +1540,7 @@ void pjs_intercom_call::i_on_thread_end()
 //========================================================
 pjs_intercom_call::pjs_intercom_call(pjs_script_id_t sid,pjs_intercom_script_interface *intercom_script_interface,pjs_global &global,
 		pjs_lua_global *lua_global, pjs_script_data_t &script_data,pjs_call_data_t &call_info,
-		const char *script_name) :
+		const char *script_name,pjs_audio_switcher &switcher) :
 		pjs_intercom_script(sid, intercom_script_interface,global, lua_global, script_data,
 				script_name, PJS_LUA_CALL_PROC), m_call_info(call_info)
 {
@@ -1487,7 +1557,7 @@ pjs_intercom_call::pjs_intercom_call(pjs_script_id_t sid,pjs_intercom_script_int
 	if (pjsua_conf_add_port(m_pool, m_master_vr->get_mediaport(),
 			&m_master_vr_id)!=PJ_SUCCESS)
 		m_master_vr_id = 0;
-	m_lua_call = new pjs_call_script_interface(m_script_data, m_call_info, m_call_is_active);
+	m_lua_call = new pjs_call_script_interface(m_script_data, m_call_info, m_call_is_active,switcher);
 	m_lua_call->set_vr_port(m_master_vr_id);
 	pj_status_t status = start_thread();
 	if (status != PJ_SUCCESS)

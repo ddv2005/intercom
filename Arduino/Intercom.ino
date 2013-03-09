@@ -106,7 +106,7 @@ public:
 fan_speed_item_t  fan_speeds[] = { {0,0}, {19,0}, {20,70}, {100,0xFF} };
 //fan_speed_item_t  fan_speeds[] = { {0,0}, {100,0xFF} };
 fan_speed_t fan_speeds_data = { (sizeof fan_speeds)/sizeof(fan_speed_item_t), FAN_MIN_SPEED, fan_speeds};
-fan_temp_data_t fan_temp_data = {580, 100, 650};
+fan_temp_data_t fan_temp_data = {530, 100, 600};
 
 fan_c  fan(PIN_FAN,fan_speeds_data,fan_temp_data);
 

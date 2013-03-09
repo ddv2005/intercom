@@ -1648,34 +1648,35 @@ SWIG_Lua_dostring(lua_State *L, const char* str) {
 #define SWIGTYPE_p_pj_timestamp swig_types[7]
 #define SWIGTYPE_p_pjs_account_config_t swig_types[8]
 #define SWIGTYPE_p_pjs_accounts_config_t swig_types[9]
-#define SWIGTYPE_p_pjs_call_info_t swig_types[10]
-#define SWIGTYPE_p_pjs_call_script_interface swig_types[11]
-#define SWIGTYPE_p_pjs_config_t swig_types[12]
-#define SWIGTYPE_p_pjs_controller_config_t swig_types[13]
-#define SWIGTYPE_p_pjs_external_controller swig_types[14]
-#define SWIGTYPE_p_pjs_intercom_message_queue swig_types[15]
-#define SWIGTYPE_p_pjs_intercom_message_t swig_types[16]
-#define SWIGTYPE_p_pjs_intercom_script_interface swig_types[17]
-#define SWIGTYPE_p_pjs_listT_pjs_intercom_message_t_t swig_types[18]
-#define SWIGTYPE_p_pjs_log_config_t swig_types[19]
-#define SWIGTYPE_p_pjs_lua_utils swig_types[20]
-#define SWIGTYPE_p_pjs_network_config_t swig_types[21]
-#define SWIGTYPE_p_pjs_script_config_t swig_types[22]
-#define SWIGTYPE_p_pjs_script_interface swig_types[23]
-#define SWIGTYPE_p_pjs_sound_config_t swig_types[24]
-#define SWIGTYPE_p_pjs_sound_subsystem_config_t swig_types[25]
-#define SWIGTYPE_p_pjs_system_config_t swig_types[26]
-#define SWIGTYPE_p_pjs_vr swig_types[27]
-#define SWIGTYPE_p_pjsip_inv_state swig_types[28]
-#define SWIGTYPE_p_short swig_types[29]
-#define SWIGTYPE_p_std__string swig_types[30]
-#define SWIGTYPE_p_unsigned_char swig_types[31]
-#define SWIGTYPE_p_unsigned_int swig_types[32]
-#define SWIGTYPE_p_unsigned_long_long swig_types[33]
-#define SWIGTYPE_p_unsigned_short swig_types[34]
-#define SWIGTYPE_p_void swig_types[35]
-static swig_type_info *swig_types[37];
-static swig_module_info swig_module = {swig_types, 36, 0, 0, 0, 0};
+#define SWIGTYPE_p_pjs_audio_monitor_config_t swig_types[10]
+#define SWIGTYPE_p_pjs_call_info_t swig_types[11]
+#define SWIGTYPE_p_pjs_call_script_interface swig_types[12]
+#define SWIGTYPE_p_pjs_config_t swig_types[13]
+#define SWIGTYPE_p_pjs_controller_config_t swig_types[14]
+#define SWIGTYPE_p_pjs_external_controller swig_types[15]
+#define SWIGTYPE_p_pjs_intercom_message_queue swig_types[16]
+#define SWIGTYPE_p_pjs_intercom_message_t swig_types[17]
+#define SWIGTYPE_p_pjs_intercom_script_interface swig_types[18]
+#define SWIGTYPE_p_pjs_listT_pjs_intercom_message_t_t swig_types[19]
+#define SWIGTYPE_p_pjs_log_config_t swig_types[20]
+#define SWIGTYPE_p_pjs_lua_utils swig_types[21]
+#define SWIGTYPE_p_pjs_network_config_t swig_types[22]
+#define SWIGTYPE_p_pjs_script_config_t swig_types[23]
+#define SWIGTYPE_p_pjs_script_interface swig_types[24]
+#define SWIGTYPE_p_pjs_sound_config_t swig_types[25]
+#define SWIGTYPE_p_pjs_sound_subsystem_config_t swig_types[26]
+#define SWIGTYPE_p_pjs_system_config_t swig_types[27]
+#define SWIGTYPE_p_pjs_vr swig_types[28]
+#define SWIGTYPE_p_pjsip_inv_state swig_types[29]
+#define SWIGTYPE_p_short swig_types[30]
+#define SWIGTYPE_p_std__string swig_types[31]
+#define SWIGTYPE_p_unsigned_char swig_types[32]
+#define SWIGTYPE_p_unsigned_int swig_types[33]
+#define SWIGTYPE_p_unsigned_long_long swig_types[34]
+#define SWIGTYPE_p_unsigned_short swig_types[35]
+#define SWIGTYPE_p_void swig_types[36]
+static swig_type_info *swig_types[38];
+static swig_module_info swig_module = {swig_types, 37, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -2106,6 +2107,199 @@ static swig_lua_attribute swig_std_string_attributes[] = {
 static swig_lua_class *swig_std_string_bases[] = {0};
 static const char *swig_std_string_base_names[] = {0};
 static swig_lua_class _wrap_class_std_string = { "string", &SWIGTYPE_p_std__string,_wrap_new_string, swig_delete_string, swig_std_string_methods, swig_std_string_attributes, swig_std_string_bases, swig_std_string_base_names };
+
+static int _wrap_pjs_audio_monitor_config_t_bind_set(lua_State* L) {
+  int SWIG_arg = 0;
+  pjs_audio_monitor_config_t *arg1 = (pjs_audio_monitor_config_t *) 0 ;
+  pj_char_t *arg2 ;
+  
+  SWIG_check_num_args("pjs_audio_monitor_config_t::bind",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("pjs_audio_monitor_config_t::bind",1,"pjs_audio_monitor_config_t *");
+  if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("pjs_audio_monitor_config_t::bind",2,"pj_char_t [255+1]");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_pjs_audio_monitor_config_t,0))){
+    SWIG_fail_ptr("pjs_audio_monitor_config_t_bind_set",1,SWIGTYPE_p_pjs_audio_monitor_config_t);
+  }
+  
+  arg2 = (char *)lua_tostring(L, 2);
+  {
+    if(arg2) {
+      strncpy((char*)arg1->bind, (const char *)arg2, 255+1-1);
+      arg1->bind[255+1-1] = 0;
+    } else {
+      arg1->bind[0] = 0;
+    }
+  }
+  
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_pjs_audio_monitor_config_t_bind_get(lua_State* L) {
+  int SWIG_arg = 0;
+  pjs_audio_monitor_config_t *arg1 = (pjs_audio_monitor_config_t *) 0 ;
+  pj_char_t *result = 0 ;
+  
+  SWIG_check_num_args("pjs_audio_monitor_config_t::bind",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("pjs_audio_monitor_config_t::bind",1,"pjs_audio_monitor_config_t *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_pjs_audio_monitor_config_t,0))){
+    SWIG_fail_ptr("pjs_audio_monitor_config_t_bind_get",1,SWIGTYPE_p_pjs_audio_monitor_config_t);
+  }
+  
+  result = (pj_char_t *)(pj_char_t *) ((arg1)->bind);
+  lua_pushstring(L,(const char *)result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_pjs_audio_monitor_config_t_clock_rate_set(lua_State* L) {
+  int SWIG_arg = 0;
+  pjs_audio_monitor_config_t *arg1 = (pjs_audio_monitor_config_t *) 0 ;
+  pj_uint32_t arg2 ;
+  
+  SWIG_check_num_args("pjs_audio_monitor_config_t::clock_rate",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("pjs_audio_monitor_config_t::clock_rate",1,"pjs_audio_monitor_config_t *");
+  if(!lua_isnumber(L,2)) SWIG_fail_arg("pjs_audio_monitor_config_t::clock_rate",2,"pj_uint32_t");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_pjs_audio_monitor_config_t,0))){
+    SWIG_fail_ptr("pjs_audio_monitor_config_t_clock_rate_set",1,SWIGTYPE_p_pjs_audio_monitor_config_t);
+  }
+  
+  SWIG_contract_assert((lua_tonumber(L,2)>=0),"number must not be negative")
+  arg2 = (pj_uint32_t)lua_tonumber(L, 2);
+  if (arg1) (arg1)->clock_rate = arg2;
+  
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_pjs_audio_monitor_config_t_clock_rate_get(lua_State* L) {
+  int SWIG_arg = 0;
+  pjs_audio_monitor_config_t *arg1 = (pjs_audio_monitor_config_t *) 0 ;
+  pj_uint32_t result;
+  
+  SWIG_check_num_args("pjs_audio_monitor_config_t::clock_rate",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("pjs_audio_monitor_config_t::clock_rate",1,"pjs_audio_monitor_config_t *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_pjs_audio_monitor_config_t,0))){
+    SWIG_fail_ptr("pjs_audio_monitor_config_t_clock_rate_get",1,SWIGTYPE_p_pjs_audio_monitor_config_t);
+  }
+  
+  result = (pj_uint32_t) ((arg1)->clock_rate);
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_pjs_audio_monitor_config_t_gain_max_set(lua_State* L) {
+  int SWIG_arg = 0;
+  pjs_audio_monitor_config_t *arg1 = (pjs_audio_monitor_config_t *) 0 ;
+  pj_uint8_t arg2 ;
+  
+  SWIG_check_num_args("pjs_audio_monitor_config_t::gain_max",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("pjs_audio_monitor_config_t::gain_max",1,"pjs_audio_monitor_config_t *");
+  if(!lua_isnumber(L,2)) SWIG_fail_arg("pjs_audio_monitor_config_t::gain_max",2,"pj_uint8_t");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_pjs_audio_monitor_config_t,0))){
+    SWIG_fail_ptr("pjs_audio_monitor_config_t_gain_max_set",1,SWIGTYPE_p_pjs_audio_monitor_config_t);
+  }
+  
+  SWIG_contract_assert((lua_tonumber(L,2)>=0),"number must not be negative")
+  arg2 = (pj_uint8_t)lua_tonumber(L, 2);
+  if (arg1) (arg1)->gain_max = arg2;
+  
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_pjs_audio_monitor_config_t_gain_max_get(lua_State* L) {
+  int SWIG_arg = 0;
+  pjs_audio_monitor_config_t *arg1 = (pjs_audio_monitor_config_t *) 0 ;
+  pj_uint8_t result;
+  
+  SWIG_check_num_args("pjs_audio_monitor_config_t::gain_max",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("pjs_audio_monitor_config_t::gain_max",1,"pjs_audio_monitor_config_t *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_pjs_audio_monitor_config_t,0))){
+    SWIG_fail_ptr("pjs_audio_monitor_config_t_gain_max_get",1,SWIGTYPE_p_pjs_audio_monitor_config_t);
+  }
+  
+  result = (pj_uint8_t) ((arg1)->gain_max);
+  lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_new_pjs_audio_monitor_config_t(lua_State* L) {
+  int SWIG_arg = 0;
+  pjs_audio_monitor_config_t *result = 0 ;
+  
+  SWIG_check_num_args("pjs_audio_monitor_config_t::pjs_audio_monitor_config_t",0,0)
+  result = (pjs_audio_monitor_config_t *)new pjs_audio_monitor_config_t();
+  SWIG_NewPointerObj(L,result,SWIGTYPE_p_pjs_audio_monitor_config_t,1); SWIG_arg++; 
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static void swig_delete_pjs_audio_monitor_config_t(void *obj) {
+pjs_audio_monitor_config_t *arg1 = (pjs_audio_monitor_config_t *) obj;
+delete arg1;
+}
+static swig_lua_method swig_pjs_audio_monitor_config_t_methods[] = {
+    {0,0}
+};
+static swig_lua_attribute swig_pjs_audio_monitor_config_t_attributes[] = {
+    { "bind", _wrap_pjs_audio_monitor_config_t_bind_get, _wrap_pjs_audio_monitor_config_t_bind_set},
+    { "clock_rate", _wrap_pjs_audio_monitor_config_t_clock_rate_get, _wrap_pjs_audio_monitor_config_t_clock_rate_set},
+    { "gain_max", _wrap_pjs_audio_monitor_config_t_gain_max_get, _wrap_pjs_audio_monitor_config_t_gain_max_set},
+    {0,0,0}
+};
+static swig_lua_class *swig_pjs_audio_monitor_config_t_bases[] = {0};
+static const char *swig_pjs_audio_monitor_config_t_base_names[] = {0};
+static swig_lua_class _wrap_class_pjs_audio_monitor_config_t = { "pjs_audio_monitor_config_t", &SWIGTYPE_p_pjs_audio_monitor_config_t,_wrap_new_pjs_audio_monitor_config_t, swig_delete_pjs_audio_monitor_config_t, swig_pjs_audio_monitor_config_t_methods, swig_pjs_audio_monitor_config_t_attributes, swig_pjs_audio_monitor_config_t_bases, swig_pjs_audio_monitor_config_t_base_names };
 
 static int _wrap_pjs_log_config_t_level_set(lua_State* L) {
   int SWIG_arg = 0;
@@ -4342,6 +4536,63 @@ fail:
 }
 
 
+static int _wrap_pjs_system_config_t_temp_sensor_set(lua_State* L) {
+  int SWIG_arg = 0;
+  pjs_system_config_t *arg1 = (pjs_system_config_t *) 0 ;
+  pj_char_t *arg2 ;
+  
+  SWIG_check_num_args("pjs_system_config_t::temp_sensor",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("pjs_system_config_t::temp_sensor",1,"pjs_system_config_t *");
+  if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("pjs_system_config_t::temp_sensor",2,"pj_char_t [255]");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_pjs_system_config_t,0))){
+    SWIG_fail_ptr("pjs_system_config_t_temp_sensor_set",1,SWIGTYPE_p_pjs_system_config_t);
+  }
+  
+  arg2 = (char *)lua_tostring(L, 2);
+  {
+    if(arg2) {
+      strncpy((char*)arg1->temp_sensor, (const char *)arg2, 255-1);
+      arg1->temp_sensor[255-1] = 0;
+    } else {
+      arg1->temp_sensor[0] = 0;
+    }
+  }
+  
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_pjs_system_config_t_temp_sensor_get(lua_State* L) {
+  int SWIG_arg = 0;
+  pjs_system_config_t *arg1 = (pjs_system_config_t *) 0 ;
+  pj_char_t *result = 0 ;
+  
+  SWIG_check_num_args("pjs_system_config_t::temp_sensor",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("pjs_system_config_t::temp_sensor",1,"pjs_system_config_t *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_pjs_system_config_t,0))){
+    SWIG_fail_ptr("pjs_system_config_t_temp_sensor_get",1,SWIGTYPE_p_pjs_system_config_t);
+  }
+  
+  result = (pj_char_t *)(pj_char_t *) ((arg1)->temp_sensor);
+  lua_pushstring(L,(const char *)result); SWIG_arg++;
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
 static int _wrap_new_pjs_system_config_t(lua_State* L) {
   int SWIG_arg = 0;
   pjs_system_config_t *result = 0 ;
@@ -4369,6 +4620,7 @@ static swig_lua_method swig_pjs_system_config_t_methods[] = {
 static swig_lua_attribute swig_pjs_system_config_t_attributes[] = {
     { "sounds_path", _wrap_pjs_system_config_t_sounds_path_get, _wrap_pjs_system_config_t_sounds_path_set},
     { "db_path", _wrap_pjs_system_config_t_db_path_get, _wrap_pjs_system_config_t_db_path_set},
+    { "temp_sensor", _wrap_pjs_system_config_t_temp_sensor_get, _wrap_pjs_system_config_t_temp_sensor_set},
     {0,0,0}
 };
 static swig_lua_class *swig_pjs_system_config_t_bases[] = {0};
@@ -4896,6 +5148,60 @@ fail:
 }
 
 
+static int _wrap_pjs_config_t_audio_monitor_set(lua_State* L) {
+  int SWIG_arg = 0;
+  pjs_config_t *arg1 = (pjs_config_t *) 0 ;
+  pjs_audio_monitor_config_t *arg2 = (pjs_audio_monitor_config_t *) 0 ;
+  
+  SWIG_check_num_args("pjs_config_t::audio_monitor",2,2)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("pjs_config_t::audio_monitor",1,"pjs_config_t *");
+  if(!SWIG_isptrtype(L,2)) SWIG_fail_arg("pjs_config_t::audio_monitor",2,"pjs_audio_monitor_config_t *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_pjs_config_t,0))){
+    SWIG_fail_ptr("pjs_config_t_audio_monitor_set",1,SWIGTYPE_p_pjs_config_t);
+  }
+  
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,2,(void**)&arg2,SWIGTYPE_p_pjs_audio_monitor_config_t,0))){
+    SWIG_fail_ptr("pjs_config_t_audio_monitor_set",2,SWIGTYPE_p_pjs_audio_monitor_config_t);
+  }
+  
+  if (arg1) (arg1)->audio_monitor = *arg2;
+  
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
+static int _wrap_pjs_config_t_audio_monitor_get(lua_State* L) {
+  int SWIG_arg = 0;
+  pjs_config_t *arg1 = (pjs_config_t *) 0 ;
+  pjs_audio_monitor_config_t *result = 0 ;
+  
+  SWIG_check_num_args("pjs_config_t::audio_monitor",1,1)
+  if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("pjs_config_t::audio_monitor",1,"pjs_config_t *");
+  
+  if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_pjs_config_t,0))){
+    SWIG_fail_ptr("pjs_config_t_audio_monitor_get",1,SWIGTYPE_p_pjs_config_t);
+  }
+  
+  result = (pjs_audio_monitor_config_t *)& ((arg1)->audio_monitor);
+  SWIG_NewPointerObj(L,result,SWIGTYPE_p_pjs_audio_monitor_config_t,0); SWIG_arg++; 
+  return SWIG_arg;
+  
+  if(0) SWIG_fail;
+  
+fail:
+  lua_error(L);
+  return SWIG_arg;
+}
+
+
 static int _wrap_new_pjs_config_t(lua_State* L) {
   int SWIG_arg = 0;
   pjs_config_t *result = 0 ;
@@ -4929,6 +5235,7 @@ static swig_lua_attribute swig_pjs_config_t_attributes[] = {
     { "script", _wrap_pjs_config_t_script_get, _wrap_pjs_config_t_script_set},
     { "system", _wrap_pjs_config_t_system_get, _wrap_pjs_config_t_system_set},
     { "network", _wrap_pjs_config_t_network_get, _wrap_pjs_config_t_network_set},
+    { "audio_monitor", _wrap_pjs_config_t_audio_monitor_get, _wrap_pjs_config_t_audio_monitor_set},
     {0,0,0}
 };
 static swig_lua_class *swig_pjs_config_t_bases[] = {0};
@@ -7986,18 +8293,21 @@ static int _wrap_Setting_getValueAsBool(lua_State* L) {
   int SWIG_arg = 0;
   libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
   char *arg2 = (char *) 0 ;
+  bool arg3 ;
   bool result;
   
-  SWIG_check_num_args("libconfig::Setting::getValueAsBool",2,2)
+  SWIG_check_num_args("libconfig::Setting::getValueAsBool",3,3)
   if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getValueAsBool",1,"libconfig::Setting const *");
   if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Setting::getValueAsBool",2,"char const *");
+  if(!lua_isboolean(L,3)) SWIG_fail_arg("libconfig::Setting::getValueAsBool",3,"bool");
   
   if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
     SWIG_fail_ptr("Setting_getValueAsBool",1,SWIGTYPE_p_libconfig__Setting);
   }
   
   arg2 = (char *)lua_tostring(L, 2);
-  result = (bool)((libconfig::Setting const *)arg1)->getValueAsBool((char const *)arg2);
+  arg3 = (lua_toboolean(L, 3)!=0);
+  result = (bool)((libconfig::Setting const *)arg1)->getValueAsBool((char const *)arg2,arg3);
   lua_pushboolean(L,(int)(result!=0)); SWIG_arg++;
   return SWIG_arg;
   
@@ -8013,18 +8323,21 @@ static int _wrap_Setting_getValueAsInt(lua_State* L) {
   int SWIG_arg = 0;
   libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
   char *arg2 = (char *) 0 ;
+  int arg3 ;
   int result;
   
-  SWIG_check_num_args("libconfig::Setting::getValueAsInt",2,2)
+  SWIG_check_num_args("libconfig::Setting::getValueAsInt",3,3)
   if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getValueAsInt",1,"libconfig::Setting const *");
   if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Setting::getValueAsInt",2,"char const *");
+  if(!lua_isnumber(L,3)) SWIG_fail_arg("libconfig::Setting::getValueAsInt",3,"int");
   
   if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
     SWIG_fail_ptr("Setting_getValueAsInt",1,SWIGTYPE_p_libconfig__Setting);
   }
   
   arg2 = (char *)lua_tostring(L, 2);
-  result = (int)((libconfig::Setting const *)arg1)->getValueAsInt((char const *)arg2);
+  arg3 = (int)lua_tonumber(L, 3);
+  result = (int)((libconfig::Setting const *)arg1)->getValueAsInt((char const *)arg2,arg3);
   lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
   return SWIG_arg;
   
@@ -8040,18 +8353,21 @@ static int _wrap_Setting_getValueAsLongLong(lua_State* L) {
   int SWIG_arg = 0;
   libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
   char *arg2 = (char *) 0 ;
+  long long arg3 ;
   long long result;
   
-  SWIG_check_num_args("libconfig::Setting::getValueAsLongLong",2,2)
+  SWIG_check_num_args("libconfig::Setting::getValueAsLongLong",3,3)
   if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getValueAsLongLong",1,"libconfig::Setting const *");
   if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Setting::getValueAsLongLong",2,"char const *");
+  if(!lua_isnumber(L,3)) SWIG_fail_arg("libconfig::Setting::getValueAsLongLong",3,"long long");
   
   if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
     SWIG_fail_ptr("Setting_getValueAsLongLong",1,SWIGTYPE_p_libconfig__Setting);
   }
   
   arg2 = (char *)lua_tostring(L, 2);
-  result = (long long)((libconfig::Setting const *)arg1)->getValueAsLongLong((char const *)arg2);
+  arg3 = (long long)lua_tonumber(L, 3);
+  result = (long long)((libconfig::Setting const *)arg1)->getValueAsLongLong((char const *)arg2,arg3);
   lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
   return SWIG_arg;
   
@@ -8067,18 +8383,21 @@ static int _wrap_Setting_getValueAsFloat(lua_State* L) {
   int SWIG_arg = 0;
   libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
   char *arg2 = (char *) 0 ;
-  float result;
+  double arg3 ;
+  double result;
   
-  SWIG_check_num_args("libconfig::Setting::getValueAsFloat",2,2)
+  SWIG_check_num_args("libconfig::Setting::getValueAsFloat",3,3)
   if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getValueAsFloat",1,"libconfig::Setting const *");
   if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Setting::getValueAsFloat",2,"char const *");
+  if(!lua_isnumber(L,3)) SWIG_fail_arg("libconfig::Setting::getValueAsFloat",3,"double");
   
   if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
     SWIG_fail_ptr("Setting_getValueAsFloat",1,SWIGTYPE_p_libconfig__Setting);
   }
   
   arg2 = (char *)lua_tostring(L, 2);
-  result = (float)((libconfig::Setting const *)arg1)->getValueAsFloat((char const *)arg2);
+  arg3 = (double)lua_tonumber(L, 3);
+  result = (double)((libconfig::Setting const *)arg1)->getValueAsFloat((char const *)arg2,arg3);
   lua_pushnumber(L, (lua_Number) result); SWIG_arg++;
   return SWIG_arg;
   
@@ -8094,18 +8413,21 @@ static int _wrap_Setting_getValueAsString(lua_State* L) {
   int SWIG_arg = 0;
   libconfig::Setting *arg1 = (libconfig::Setting *) 0 ;
   char *arg2 = (char *) 0 ;
+  char *arg3 = (char *) 0 ;
   std::string result;
   
-  SWIG_check_num_args("libconfig::Setting::getValueAsString",2,2)
+  SWIG_check_num_args("libconfig::Setting::getValueAsString",3,3)
   if(!SWIG_isptrtype(L,1)) SWIG_fail_arg("libconfig::Setting::getValueAsString",1,"libconfig::Setting const *");
   if(!SWIG_lua_isnilstring(L,2)) SWIG_fail_arg("libconfig::Setting::getValueAsString",2,"char const *");
+  if(!SWIG_lua_isnilstring(L,3)) SWIG_fail_arg("libconfig::Setting::getValueAsString",3,"char const *");
   
   if (!SWIG_IsOK(SWIG_ConvertPtr(L,1,(void**)&arg1,SWIGTYPE_p_libconfig__Setting,0))){
     SWIG_fail_ptr("Setting_getValueAsString",1,SWIGTYPE_p_libconfig__Setting);
   }
   
   arg2 = (char *)lua_tostring(L, 2);
-  result = ((libconfig::Setting const *)arg1)->getValueAsString((char const *)arg2);
+  arg3 = (char *)lua_tostring(L, 3);
+  result = ((libconfig::Setting const *)arg1)->getValueAsString((char const *)arg2,(char const *)arg3);
   lua_pushlstring(L,(&result)->data(),(&result)->size()); SWIG_arg++;
   return SWIG_arg;
   
@@ -9110,6 +9432,7 @@ static swig_type_info _swigt__p_p_pjs_intercom_message_t = {"_p_p_pjs_intercom_m
 static swig_type_info _swigt__p_pj_timestamp = {"_p_pj_timestamp", "pj_timestamp *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_pjs_account_config_t = {"_p_pjs_account_config_t", "pjs_account_config_t *", 0, 0, (void*)&_wrap_class_pjs_account_config_t, 0};
 static swig_type_info _swigt__p_pjs_accounts_config_t = {"_p_pjs_accounts_config_t", "pjs_accounts_config_t *", 0, 0, (void*)&_wrap_class_pjs_accounts_config_t, 0};
+static swig_type_info _swigt__p_pjs_audio_monitor_config_t = {"_p_pjs_audio_monitor_config_t", "pjs_audio_monitor_config_t *", 0, 0, (void*)&_wrap_class_pjs_audio_monitor_config_t, 0};
 static swig_type_info _swigt__p_pjs_call_info_t = {"_p_pjs_call_info_t", "pjs_call_info_t *", 0, 0, (void*)&_wrap_class_pjs_call_info_t, 0};
 static swig_type_info _swigt__p_pjs_call_script_interface = {"_p_pjs_call_script_interface", "pjs_call_script_interface *", 0, 0, (void*)&_wrap_class_pjs_call_script_interface, 0};
 static swig_type_info _swigt__p_pjs_config_t = {"_p_pjs_config_t", "pjs_config_t *", 0, 0, (void*)&_wrap_class_pjs_config_t, 0};
@@ -9148,6 +9471,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_pj_timestamp,
   &_swigt__p_pjs_account_config_t,
   &_swigt__p_pjs_accounts_config_t,
+  &_swigt__p_pjs_audio_monitor_config_t,
   &_swigt__p_pjs_call_info_t,
   &_swigt__p_pjs_call_script_interface,
   &_swigt__p_pjs_config_t,
@@ -9186,6 +9510,7 @@ static swig_cast_info _swigc__p_p_pjs_intercom_message_t[] = {  {&_swigt__p_p_pj
 static swig_cast_info _swigc__p_pj_timestamp[] = {  {&_swigt__p_pj_timestamp, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_pjs_account_config_t[] = {  {&_swigt__p_pjs_account_config_t, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_pjs_accounts_config_t[] = {  {&_swigt__p_pjs_accounts_config_t, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_pjs_audio_monitor_config_t[] = {  {&_swigt__p_pjs_audio_monitor_config_t, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_pjs_call_info_t[] = {  {&_swigt__p_pjs_call_info_t, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_pjs_call_script_interface[] = {  {&_swigt__p_pjs_call_script_interface, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_pjs_config_t[] = {  {&_swigt__p_pjs_config_t, 0, 0, 0},{0, 0, 0, 0}};
@@ -9224,6 +9549,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_pj_timestamp,
   _swigc__p_pjs_account_config_t,
   _swigc__p_pjs_accounts_config_t,
+  _swigc__p_pjs_audio_monitor_config_t,
   _swigc__p_pjs_call_info_t,
   _swigc__p_pjs_call_script_interface,
   _swigc__p_pjs_config_t,

@@ -306,27 +306,45 @@ void Setting::setFormat(Format format)
 }
 
 // ---------------------------------------------------------------------------
-bool Setting::getValueAsBool(const char *name) const
+bool Setting::getValueAsBool(const char *name,bool defValue) const
 {
-	return(config_setting_get_bool(_setting) ? true : false);
+	int value = defValue;
+	if(config_setting_lookup_bool(_setting,name,&value)==CONFIG_TRUE)
+		return value;
+	else
+		return defValue;
 }
-int Setting::getValueAsInt(const char *name) const
+int Setting::getValueAsInt(const char *name,int defValue) const
 {
-	return(config_setting_get_int(_setting));
+	int value = defValue;
+	if(config_setting_lookup_int(_setting,name,&value)==CONFIG_TRUE)
+		return value;
+	else
+		return defValue;
 }
-long long Setting::getValueAsLongLong(const char *name) const
+long long Setting::getValueAsLongLong(const char *name,long long defValue) const
 {
-	return(config_setting_get_int64(_setting));
+	long long value = defValue;
+	if(config_setting_lookup_int64(_setting,name,&value)==CONFIG_TRUE)
+		return value;
+	else
+		return defValue;
 }
 
-float Setting::getValueAsFloat(const char *name) const
+double Setting::getValueAsFloat(const char *name,double defValue) const
 {
-	return(config_setting_get_float(_setting));
+	double value = defValue;
+	if(config_setting_lookup_float(_setting,name,&value)==CONFIG_TRUE)
+		return value;
+	else
+		return defValue;
 }
 
-std::string  Setting::getValueAsString(const char *name) const
+std::string  Setting::getValueAsString(const char *name,const char * defValue) const
 {
-  const char *s = config_setting_get_string(_setting);
+	const char *s = defValue;
+	if(config_setting_lookup_string(_setting,name,&s)!=CONFIG_TRUE)
+		s = defValue;
 
   std::string str;
   if(s)

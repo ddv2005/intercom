@@ -106,8 +106,8 @@ public:
 class pjs_lua_global
 {
 protected:
-	typedef map<std::string,pjs_lua_global_value *> pjs_global_map_t;
-	typedef map<std::string,pjs_lua_global_value *>::iterator pjs_global_map_itr_t;
+	typedef std::map<std::string,pjs_lua_global_value *> pjs_global_map_t;
+	typedef std::map<std::string,pjs_lua_global_value *>::iterator pjs_global_map_itr_t;
 	pjs_simple_mutex m_lock;
 	pjs_global_map_t m_map;
 

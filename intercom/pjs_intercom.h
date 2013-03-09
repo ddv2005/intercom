@@ -16,6 +16,9 @@
 #include "pjs_intercom_script_interface.h"
 #include "pjs_lua.h"
 #include "pjs_vr.h"
+#include "pjs_audio_switcher.h"
+#include "pjs_media_sync.h"
+#include "pjs_audio_monitor.h"
 
 #define PJS_ECHO_PERIOD_MS			10
 #define PJS_MAX_CONTROL_MESSAGES	200
@@ -23,7 +26,7 @@
 #define PJS_LUA_CALL_PROC "call_main"
 
 class pjs_intercom_system;
-class pjs_master_port
+class pjs_master_port:public pjs_media_sync
 {
 protected:
 	pjs_global & m_global;
@@ -208,7 +211,7 @@ protected:
 	}
 public:
 	pjs_intercom_call(pjs_script_id_t sid,pjs_intercom_script_interface *intercom_script_interface,pjs_global &global, pjs_lua_global *lua_global,
-			pjs_script_data_t &script_data,pjs_call_data_t &callinfo, const char *script_name);
+			pjs_script_data_t &script_data,pjs_call_data_t &callinfo, const char *script_name,pjs_audio_switcher &switcher);
 	virtual ~pjs_intercom_call();
 	bool is_active()
 	{
@@ -252,7 +255,8 @@ void set_global_to_lua(pjs_lua *lua, pjs_global *global);
 class pjs_intercom_system: public pjs_external_controller_callback,
 		public pjs_intercom_script_interface,
 		public pjs_vr_callback,
-		public pjs_call_script_interface_callback
+		public pjs_call_script_interface_callback,
+		public pjs_audio_switcher
 {
 protected:
 	pjs_config_t m_config;
@@ -270,6 +274,7 @@ protected:
 	pjsua_transport_id m_udp_transport_id;
 
 	pj_timestamp m_last_check_scripts;
+	pj_timestamp m_last_log_flush;
 	pj_timer_entry *m_timer;
 	pjs_master_port *m_master_port;
 	pjmedia_aud_stream *m_play_stream;
@@ -296,6 +301,8 @@ protected:
 	pjs_lua_global m_lua_global;
 
 	bool m_started;
+
+	pjs_audio_monitor *m_audio_monitor;
 
 	static pjs_intercom_system *self;
 
@@ -380,6 +387,15 @@ public:
 	void set_config(pjs_config_t &config);
 	pjs_result_t start();
 	void stop();
+
+	pjs_media_sync* get_media_sync()
+	{
+		if(m_master_port)
+			return m_master_port;
+		else
+			return NULL;
+	}
+
 	virtual pj_int32_t on_ext_controller_message(pjs_intercom_message_t &message);
 
 	//pjs_intercom_script_interface implementation
@@ -400,6 +416,13 @@ public:
 	virtual unsigned hangup_calls_by_tag(pj_int32_t tag, unsigned code);
 	virtual bool call_is_active(int callid);
 	virtual pjs_script_id_t create_thread(const char *script,const char *proc, const char *user_options, pj_int32_t tag);
+
+	// pjs_audio_switcher
+	virtual pj_status_t connect(pjsua_conf_port_id source,
+			pjsua_conf_port_id sink);
+	virtual pj_status_t disconnect(pjsua_conf_port_id source,
+			pjsua_conf_port_id sink);
+
 };
 
 #endif /* PJS_INTERCOM_H_ */

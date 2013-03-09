@@ -95,11 +95,11 @@ class  Setting
 
   Setting * settingsByIndex(int index) const;
 
-  bool getValueAsBool(const char *name) const;
-  int getValueAsInt(const char *name) const;
-  long long getValueAsLongLong(const char *name) const;
-  float getValueAsFloat(const char *name) const;
-  std::string  getValueAsString(const char *name) const;
+  bool getValueAsBool(const char *name,bool defValue) const;
+  int getValueAsInt(const char *name,int defValue) const;
+  long long getValueAsLongLong(const char *name,long long defValue) const;
+  double getValueAsFloat(const char *name,double defValue) const;
+  std::string  getValueAsString(const char *name,const char* defValue) const;
 
   bool exists(const char *name) const;
 

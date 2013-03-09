@@ -2,11 +2,17 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
+<style type="text/css">
+img {
+width:100%;
+height:100%;
+}
+</style>
 <title>Intercom Camera</title>
 </head>
 <script type="text/javascript">
 
-/* Copyright (C) 2007 Richard Atterer, richard©atterer.net
+/* Copyright (C) 2007 Richard Atterer, richardáLatterer.net
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License, version 2. See the file
    COPYING for details. */
@@ -14,13 +20,15 @@
 var imageNr = 0; // Serial number of current image
 var finished = new Array(); // References to img objects which have finished downloading
 var paused = false;
+var imageCounter = 0;
+var imageTimer = 0;
 
 function createImageLayer() {
   var img = new Image();
   img.style.position = "absolute";
   img.style.zIndex = -1;
+  img.onclick = imageOnClick;
   img.onload = imageOnload;
-  img.onclick = imageOnclick;
   img.src = "camera?action=snapshot&n=" + (++imageNr);
   var webcam = document.getElementById("webcam");
   webcam.insertBefore(img, webcam.firstChild);
@@ -34,18 +42,47 @@ function imageOnload() {
     del.parentNode.removeChild(del);
   }
   finished.push(this);
-  if (!paused) createImageLayer();
+  imageCounter++;
+  if(imageCounter>100) PauseImage();
+  if (!paused) imageTimer = setTimeout('createImageLayer();',100);
 }
 
-function imageOnclick() { // Clicking on the image will pause the stream
-  paused = !paused;
+function PauseImage() { // Clicking on the image will pause the stream
+  clearTimeout();
+  paused = true;
+  updateStatus();
+}
+
+function updateStatus()
+{
+  var otext = document.getElementById("overlayText");
+  if(paused)
+  {
+    otext.innerHTML = "<font color=red>Paused</font>";
+    otext.style.zIndex = imageNr+10;
+  }
+  else
+  {
+    otext.innerHTML = "";
+    otext.style.zIndex = -1;
+  }
+}
+
+function imageOnClick() { // Clicking on the image will pause the stream
+  clearTimeout();
+  imageCounter = 0;
+  if(paused) paused = false; else paused = true;
+  updateStatus();
   if (!paused) createImageLayer();
 }
 
 </script>
-<body onload="createImageLayer();">
-
-<div id="webcam"><noscript><img src="camera?action=snapshot" /></noscript></div>
-
+<body onload="createImageLayer();"  marginwidth="0" marginheight="0" hspace="0" vspace="0" frameborder="0">
+<LAYER LEFT=0 TOP=0>
+<div id="webcam" width=100% height=100%></div>
+</LAYER>
+<LAYER LEFT=0 TOP=0>
+<div id="overlayText" style="position: absolute; z-index: 100; "></div>
+</LAYER>
 </body>
 </html>

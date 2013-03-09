@@ -21,7 +21,7 @@ protected:
 						    pjmedia_frame *frame );
 	static pj_status_t put_frame_s( pjmedia_port *port,
 						    const pjmedia_frame *frame );
-    static pj_status_t port_destroy_s( pjmedia_port *port );
+  static pj_status_t port_destroy_s( pjmedia_port *port );
 
 	virtual pj_status_t get_frame(pjmedia_frame *frame);
 	virtual pj_status_t put_frame(const pjmedia_frame *frame);

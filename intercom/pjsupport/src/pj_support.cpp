@@ -1,4 +1,4 @@
-#include "pj_lock.h"
+#include <pj_lock.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <errno.h>

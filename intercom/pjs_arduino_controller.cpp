@@ -27,12 +27,6 @@
 #define AFM_MANUAL  0
 #define AFM_AUTO    1
 
-#ifdef	__arm__
-#define TEMP_SENSOR_PATH	"/sys/class/hwmon/hwmon0/device/temp1_input"
-#else
-#define TEMP_SENSOR_PATH	"/home/ddv/test.temp"
-#endif
-
 pjs_arduino_controller::pjs_arduino_controller(pjs_global &global,pjs_external_controller_callback &callback):
 	pjs_external_controller(global,callback),m_event(),parser(cp_prefix_t(0x55,0xBB))
 {
@@ -104,6 +98,7 @@ void pjs_arduino_controller::check_input()
 void* pjs_arduino_controller::thread_proc()
 {
 	pjs_controller_config_t config = m_global.get_config().controller;
+	pj_char_t temp_sensor_path[sizeof(pjs_system_config_t::temp_sensor)];
 	pj_uint8_t newPacketBuffer[MAX_PACKET_SIZE+4];
 	pj_uint8_t buffer[MAX_PACKET_SIZE+4];
 	pj_timestamp last_activity_time;
@@ -114,6 +109,7 @@ void* pjs_arduino_controller::thread_proc()
 	bool has_temp_sensor = true;
 	just_opened = false;
 
+	strncpy(temp_sensor_path,m_global.get_config().system.temp_sensor,sizeof(temp_sensor_path));
 	last_check_time.u64 = last_temp_time.u64 = 0;
 	PJ_LOG_( INFO_LEVEL,(__FILE__,"arduino controller thread start"));
 	while(!m_exit)
@@ -211,10 +207,10 @@ void* pjs_arduino_controller::thread_proc()
 					pj_get_timestamp(&last_activity_time);
 					sendPacketN(ACC_PING);
 				}
-				if(has_temp_sensor&&(pj_elapsed_msec(&last_temp_time,&now)>=1000))
+				if(has_temp_sensor&&(pj_elapsed_msec(&last_temp_time,&now)>=1000)&&temp_sensor_path[0])
 				{
 					pj_get_timestamp(&last_temp_time);
-					int tf=open(TEMP_SENSOR_PATH,O_RDONLY);
+					int tf=open(temp_sensor_path,O_RDONLY);
 					if(tf>=0)
 					{
 						char temp[32];
@@ -223,7 +219,9 @@ void* pjs_arduino_controller::thread_proc()
 						if(s>=sizeof(temp))
 							s=sizeof(temp)-1;
 						temp[s]=0;
-						int itemp = atoi(temp)/1000;
+						int itemp = atoi(temp);
+						if(itemp>1000)
+							itemp/=1000;
 						if((itemp>30)&&(itemp<100))
 						{
 							byte_t bt=itemp;
@@ -233,7 +231,7 @@ void* pjs_arduino_controller::thread_proc()
 					}
 					else
 					{
-						PJ_LOG_( ERROR_LEVEL,(__FILE__,"arduino can't open %s. Error %d",TEMP_SENSOR_PATH, (int)errno));
+						PJ_LOG_( ERROR_LEVEL,(__FILE__,"arduino can't open %s. Error %d",temp_sensor_path, (int)errno));
 						has_temp_sensor = false;
 					}
 				}

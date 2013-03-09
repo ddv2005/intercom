@@ -30,7 +30,7 @@ void add_pjs_lua_global(pjs_lua_global *ptr, lua_State *L, const char *name)
 int pjs_lua_global::l_set(lua_State *L)
 {
 	pj_uint8_t lt;
-	string key;
+	std::string key;
 	pjs_lua_global_value *value;
 	pjs_lua_global_data_t *data;
 	lua_check_num_args(__func__,3,3);
@@ -90,7 +90,7 @@ int pjs_lua_global::l_set(lua_State *L)
 
 int pjs_lua_global::l_get(lua_State *L)
 {
-	string key;
+	std::string key;
 	pjs_lua_global_value *value;
 	pjs_lua_global_data_t *data;
 	lua_check_num_args(__func__,2,2);

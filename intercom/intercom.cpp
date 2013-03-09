@@ -3,6 +3,7 @@
 #include "project_config.h"
 #include "pjs_intercom.h"
 #include "pjs_lua.h"
+#include "pjs_lua_libs.h"
 #include <pjsua-lib/pjsua.h>
 #include <signal.h>
 #include <semaphore.h>
@@ -38,6 +39,11 @@ int main(int argc, const char * argv[])
 	lua_c = new pjs_lua();
 	if (lua_c->load_script(config_file_name) == 0)
 	{
+		pjs_exit_t script_exit=true;
+		pjs_shared_event script_event;
+		pjs_lua_utils *lua_utils = new pjs_lua_utils(script_exit,
+				script_event);
+		lua_c->add_interface("utils", lua_utils, lua_utils, true);
 		lua_c->run();
 		lua_getglobal(lua_c->get_state(), "config");
 		if (lua_isfunction(lua_c->get_state(),-1))

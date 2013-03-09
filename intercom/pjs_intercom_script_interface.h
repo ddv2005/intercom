@@ -3,11 +3,13 @@
 #include "project_common.h"
 #include "pjs_lua_common.h"
 #include "pjs_external_controller.h"
+#include "pjs_audio_switcher.h"
 #include <string>
 
 class pjs_call_script_interface_callback
 {
 public:
+	virtual ~pjs_call_script_interface_callback() {}
 	virtual void on_connected_to_main_changed(pjsua_call_id callid)=0;
 };
 
@@ -95,12 +97,13 @@ protected:
 	bool &m_call_is_active;
 	pjsua_conf_port_id m_vr_port;
 	pjsua_conf_port_id m_call_port;
+	pjs_audio_switcher &m_switcher;
 
 	void check_vr_port_connection()
 	{
 		if (m_call_port && m_vr_port)
 		{
-			pjsua_conf_connect(m_vr_port, m_call_port);
+			m_switcher.connect(m_vr_port, m_call_port);
 		}
 	}
 
@@ -127,13 +130,13 @@ protected:
 			{
 				if (connect)
 				{
-					pjsua_conf_connect(m_call_port, rem_port);
-					pjsua_conf_connect(rem_port, m_call_port);
+					m_switcher.connect(m_call_port, rem_port);
+					m_switcher.connect(rem_port, m_call_port);
 				}
 				else
 				{
-					pjsua_conf_disconnect(m_call_port, rem_port);
-					pjsua_conf_disconnect(rem_port, m_call_port);
+					m_switcher.disconnect(m_call_port, rem_port);
+					m_switcher.disconnect(rem_port, m_call_port);
 				}
 			}
 		}
@@ -149,18 +152,18 @@ protected:
 						(m_call_info.sound_connection_type & SCT_CONFERENCE)
 								|| (m_call_info.sound_connection_type
 										& SCT_CONFERENCE_ON_CONNECTED));
-				pjsua_conf_connect(m_call_port, 0);
-				pjsua_conf_connect(0, m_call_port);
+				m_switcher.connect(m_call_port, 0);
+				m_switcher.connect(0, m_call_port);
 			}
 			else
 			{
 				sound_route_to_other_calls(
 						m_call_info.sound_connection_type & SCT_CONFERENCE);
-				pjsua_conf_disconnect(m_call_port, 0);
+				m_switcher.disconnect(m_call_port, 0);
 				if (m_call_info.sound_connection_type & SCT_LISTEN_MAIN)
-					pjsua_conf_connect(0, m_call_port);
+					m_switcher.connect(0, m_call_port);
 				else
-					pjsua_conf_disconnect(0, m_call_port);
+					m_switcher.disconnect(0, m_call_port);
 			}
 		}
 	}
@@ -170,9 +173,9 @@ public:
 protected:
 #endif
 	DEFINE_LUA_INTERFACE_CLASS_NAME("pjs_call_script_interface")
-	pjs_call_script_interface(pjs_script_data_t &script_data,pjs_call_data_t &call_info, bool &call_is_active) :
+	pjs_call_script_interface(pjs_script_data_t &script_data,pjs_call_data_t &call_info, bool &call_is_active, pjs_audio_switcher &switcher) :
 			pjs_script_interface(script_data), m_call_info(call_info), m_call_is_active(
-					call_is_active)
+					call_is_active),m_switcher(switcher)
 	{
 		m_vr_port = 0;
 		m_call_port = 0;

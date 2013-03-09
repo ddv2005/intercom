@@ -6,13 +6,20 @@
 
 
 #pragma pack(push)
-#pragma pack(0)
+#pragma pack(1)
 
 SWIG_BEGIN_DECL
 
 #define MAX_FILENAME_PATH	255
 #define MAX_CFG_STRING		64
 #define	MAX_ACCOUNTS		PJSUA_MAX_ACC
+
+typedef struct
+{
+	pj_char_t	bind[MAX_FILENAME_PATH+1];
+	pj_uint32_t	clock_rate;
+	pj_uint8_t	gain_max;
+}pjs_audio_monitor_config_t;
 
 typedef struct
 {
@@ -92,6 +99,7 @@ typedef struct
 {
 	pj_char_t	sounds_path[MAX_FILENAME_PATH];
 	pj_char_t	db_path[MAX_FILENAME_PATH];
+	pj_char_t	temp_sensor[MAX_FILENAME_PATH];
 }pjs_system_config_t;
 
 typedef struct
@@ -109,6 +117,7 @@ typedef struct
 	pjs_script_config_t		script;
 	pjs_system_config_t		system;
 	pjs_network_config_t	network;
+	pjs_audio_monitor_config_t audio_monitor;
 }pjs_config_t;
 
 SWIG_END_DECL

@@ -28,9 +28,17 @@ void pjs_config_init(pjs_config_t &config)
 
   config.controller.speed = 9600;
 
+  config.audio_monitor.gain_max = 5;
+
   strcpy(config.script.main_script,"intercom.lua");
   strcpy(config.script.call_script,"call.lua");
   strcpy(config.script.scripts_path,"./scripts");
+
+#ifdef	__arm__
+  strcpy(config.system.temp_sensor,"/sys/class/hwmon/hwmon0/device/temp1_input");
+#else
+  config.system.temp_sensor[0] = 0;
+#endif
 
   strcpy(config.system.db_path,"./db");
   strcpy(config.system.sounds_path,"./sounds");

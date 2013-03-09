@@ -521,7 +521,10 @@ static int ca_thread_func (void *arg)
 
 	result = stream->ca_cb (user_data, &frame);
 	if (result != PJ_SUCCESS || stream->quit)
+	{
+	    TRACE_((THIS_FILE, "ca_thread_func: exit on error %d",result));
 	    break;
+	}
 
 	tstamp.u64 += nframes;
     }
