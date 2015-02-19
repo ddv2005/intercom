@@ -366,6 +366,7 @@ pjs_result_t pjs_intercom_system::start()
 
 								acc_cfg.reg_retry_interval = 60;
 								acc_cfg.reg_first_retry_interval = 15;
+								acc_cfg.ka_interval = 15;
 
 								if (m_config.sip_accounts.accounts[i].is_local_network)
 								{
