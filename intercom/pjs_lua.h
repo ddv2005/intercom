@@ -178,6 +178,7 @@ class pjs_lua
 {
 protected:
 	lua_State *m_state;
+	static pjs_simple_mutex m_init_mutex;
 
 	static void terminate_hook (lua_State *L, lua_Debug *ar)
 	{
@@ -201,6 +202,7 @@ public:
 	pjs_lua()
 	{
 		m_state = luaL_newstate();
+		m_init_mutex.lock();
 		luaL_openlibs(m_state);
 		load_lib("pjs",&luaopen_pjs);
 		load_lib("sqlite3",&luaopen_lsqlite3);
@@ -208,6 +210,7 @@ public:
 		load_lib("socketcore",&luaopen_socket_core);
 		load_lib("mimecore",&luaopen_mime_core);
 		load_lib("socketunix",&luaopen_socket_unix);
+		m_init_mutex.unlock();
 	}
 	lua_State *get_state() { return m_state; }
 
