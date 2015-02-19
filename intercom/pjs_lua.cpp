@@ -1,6 +1,6 @@
 #include "pjs_lua.h"
 
-
+pjs_simple_mutex pjs_lua::m_init_mutex;
 typedef struct pjs_lua_global_data_t
 {
 	pjs_lua_global *self;
