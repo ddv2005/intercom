@@ -35,6 +35,11 @@
 #define INT_FAN_SPEED  0
 #endif
 
+#ifdef HAS_ULTRASONIC
+#define PIN_ULTRASONIC A0
+volatile uint16_t ultrasonicValue = 0;
+uint16_t lastUltrasonicValue = 0;
+#endif
 volatile byte_t isStandaloneMode = 0;
 volatile byte_t inputsValue = 0;
 volatile byte_t outputsValue = 0;
@@ -98,6 +103,57 @@ public:
     return m_lastValue;
   }
 };
+#ifdef HAS_ULTRASONIC
+#define ULTRASONIC_AVR 10
+static dynamicDelay_c ultrasonicSensorDelay;
+static WORKING_AREA(waUltrasonicSensorThread, 128);
+static msg_t UltrasonicSensorThread(void *arg) {
+	ultrasonicSensorDelay.start();
+  while(true)
+  {
+  	uint32_t cnt = 0;
+  	uint32_t sum = 0;
+  	uint32_t max = 110;
+  	uint32_t min = 0;
+  	static uint32_t values[ULTRASONIC_AVR];
+
+  	for(int i = 0; i < ULTRASONIC_AVR ; i++)
+ 	  {
+  		chThdSleepMilliseconds(10);
+  		values[i] = analogRead(PIN_ULTRASONIC);
+  		if(values[i]>max)
+  		{
+  			max = values[i];
+  		}
+  	}
+
+  	min = max-max/5;
+
+  	for(int i = 0; i < ULTRASONIC_AVR ; i++)
+ 	  {
+  		if(values[i]>min)
+  		{
+  			sum += values[i];
+  			cnt++;
+  		}
+  	}
+
+  	if(cnt>=4)
+  	{
+			uint16_t us = sum/cnt;
+			ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+			{
+				ultrasonicValue = us;
+			}
+  	}
+
+    chThdSleepMilliseconds(10);
+    ultrasonicSensorDelay.delay(200);
+  }
+  return 0;
+}
+
+#endif
 
 #ifdef HAS_FAN
 //========================== FAN SPEED DATA   ==========================
@@ -420,6 +476,19 @@ static msg_t SerialThread(void *arg) {
         lastInputsValue = currentInputsValue;
         Serial.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),ACC_ISTAT,&lastInputsValue,sizeof(lastInputsValue)));
       }
+#ifdef HAS_ULTRASONIC
+      int16_t currentUValue;
+      ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+      {
+      	currentUValue =  ultrasonicValue;
+      }
+
+      if(abs((int32_t)lastUltrasonicValue-(int32_t)currentUValue)>=(lastUltrasonicValue/10))
+      {
+      	lastUltrasonicValue = currentUValue;
+        Serial.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),ACC_ULTRASONIC_DATA,&lastUltrasonicValue,sizeof(lastUltrasonicValue)));
+      }
+#endif
     }
 
     bytesAvailable = Serial.available();
@@ -615,6 +684,10 @@ void setup() {
 #endif
 #endif
 
+#ifdef HAS_ULTRASONIC
+  chThdCreateStatic(waUltrasonicSensorThread, sizeof(waUltrasonicSensorThread),
+  NORMALPRIO + 4, UltrasonicSensorThread, NULL);
+#endif
   chThdCreateStatic(waBtnLedThread, sizeof(waBtnLedThread),
   NORMALPRIO + 3, BtnLedThread, NULL);
 
@@ -626,6 +699,8 @@ void setup() {
 
   chThdCreateStatic(waSerialThread, sizeof(waSerialThread),
   NORMALPRIO + 1, SerialThread, NULL);
+
+
 
   chThdSleepMilliseconds(100);
   

@@ -22,6 +22,7 @@
 #define  ACC_GET_OSTAT      11
 #define  ACC_PING           12
 #define  ACC_SET_BTN2_LED  	13
+#define  ACC_ULTRASONIC_DATA 14
 #define  ACC_ERROR  0xFF
 
 //Input mask
