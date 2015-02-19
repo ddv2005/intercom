@@ -16,6 +16,7 @@
 #define  ACC_GET_OSTAT      11
 #define  ACC_PING           12
 #define  ACC_SET_BTN2_LED  	13
+#define  ACC_ULTRASONIC_DATA  	14
 #define  ACC_ERROR  0xFF
 
 //Input mask
@@ -279,6 +280,21 @@ void* pjs_arduino_controller::thread_proc()
 									{
 										m_input = buffer[1];
 										check_input();
+									}
+									break;
+								}
+
+								case ACC_ULTRASONIC_DATA:
+								{
+									if(size>=3)
+									{
+										pj_uint16_t us = *(pj_uint16_t*)(&buffer[1]);
+										pjs_intercom_message_t message;
+										memset(&message,0,sizeof(message));
+										message.message = IM_ULTRASONIC_DATA;
+										message.param1 = us;
+
+										fire_on_message(message);
 									}
 									break;
 								}
