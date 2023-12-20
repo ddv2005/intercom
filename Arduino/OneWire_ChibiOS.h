@@ -1,7 +1,7 @@
 #ifndef OneWireC_h
 #define OneWireC_h
 
-#include <inttypes.h>
+#include <stdint.h>
 
 #if ARDUINO >= 100
 #include "Arduino.h"       // for delayMicroseconds, digitalPinToBitMask, etc
