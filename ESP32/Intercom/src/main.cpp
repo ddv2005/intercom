@@ -1,42 +1,16 @@
 #include <Arduino.h>
-#include <ChibiOS.h>
-#include <util/atomic.h>
-#include "comm_prot_parser.h"
-#include "arduino_comm.h"
 #include "led_controller.h"
 #include "dynamic_delay.h"
-#ifdef	HAS_FAN
-#include "fan.h"
-#ifdef	HAS_TEMP_SENSOR
-#include "DallasTemperature.h"
-#include "OneWire_ChibiOS.h"
-#endif
-#endif
+#include "config.h"
+#include "comm_prot_parser.h"
+#include "arduino_comm.h"
+#include "unilib/uni_mutex.h"
+#include "esp_task_wdt.h"
+#include "esp_bt.h"
 
-#undef  DEBUG_TEMP
-
-#define HOST_TIMEOUT  15000
-#define BTN_GUARD_TIME    100
-#define INP_GUARD_TIME    100
-#define MAX_PACKET_SIZE   32
-#define PIN_LED      13
-#define PIN_BTN_LED  6
-#define PIN_RELAY    4
-#define PIN_BTN      9
-#define PIN_INP1     7
-#define PIN_INP2     8
-#define PIN_BTN2_LED   10
-#ifdef HAS_FAN
-#ifdef HAS_TEMP_SENSOR
-#define PIN_TEMP     5
-#endif
-#define PIN_FAN      3
-#define PIN_FAN_SPEED  2
-#define INT_FAN_SPEED  0
-#endif
+SemaphoreHandle_t debugLock = xSemaphoreCreateMutex();
 
 #ifdef HAS_ULTRASONIC
-#define PIN_ULTRASONIC A0
 volatile uint16_t ultrasonicValue = 0;
 uint16_t lastUltrasonicValue = 0;
 #endif
@@ -103,11 +77,13 @@ public:
     return m_lastValue;
   }
 };
+
+static uni_simple_mutex globalMutex;
 #ifdef HAS_ULTRASONIC
 #define ULTRASONIC_AVR 10
 static dynamicDelay_c ultrasonicSensorDelay;
-static WORKING_AREA(waUltrasonicSensorThread, 128);
-static msg_t UltrasonicSensorThread(void *arg) {
+static TaskHandle_t waUltrasonicSensorThread;
+static void UltrasonicSensorThread(void *arg) {
 	ultrasonicSensorDelay.start();
   while(true)
   {
@@ -119,7 +95,7 @@ static msg_t UltrasonicSensorThread(void *arg) {
 
   	for(int i = 0; i < ULTRASONIC_AVR ; i++)
  	  {
-  		chThdSleepMilliseconds(10);
+  		delay(10);
   		values[i] = analogRead(PIN_ULTRASONIC);
   		if(values[i]>max)
   		{
@@ -141,151 +117,16 @@ static msg_t UltrasonicSensorThread(void *arg) {
   	if(cnt>=4)
   	{
 			uint16_t us = sum/cnt;
-			ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
 			{
+        uni_locker lock(globalMutex);
 				ultrasonicValue = us;
 			}
   	}
 
-    chThdSleepMilliseconds(10);
+    delay(10);
     ultrasonicSensorDelay.delay(200);
   }
-  return 0;
 }
-
-#endif
-
-#ifdef HAS_FAN
-//========================== FAN SPEED DATA   ==========================
-#define FAN_MIN_SPEED  20
-// Speeds MUST be sorted from 0 -> 100
-fan_speed_item_t  fan_speeds[] = { {0,0}, {19,0}, {20,70}, {100,0xFF} };
-//fan_speed_item_t  fan_speeds[] = { {0,0}, {100,0xFF} };
-fan_speed_t fan_speeds_data = { (sizeof fan_speeds)/sizeof(fan_speed_item_t), FAN_MIN_SPEED, fan_speeds};
-fan_temp_data_t fan_temp_data = {530, 100, 600};
-
-fan_c  fan(PIN_FAN,fan_speeds_data,fan_temp_data);
-
-uint32_t fan_pulse = 0;
-systime_t fan_pulse_start = 0;
-uint16_t  fan_rpm = 0;
-uint16_t  fan_counter = 0;
-uint8_t fan_speed_bit;
-uint8_t fan_speed_port;
-uint8_t fan_stopped = 0;
-
-
-//=======================================================================
-void fanSpeedInt()
-{
-  fan_stopped = 0;
-  int8_t v = (*portInputRegister(fan_speed_port) & fan_speed_bit);
-  if(fan_pulse_start==0)
-  {
-    if(v)
-    {
-      fan_pulse_start = chTimeNow();
-      fan_counter = 0;
-    }
-  }
-  else
-  {
-    if(!v)
-    {
-      if(fan_pulse_start<chTimeNow())
-      {
-        fan_counter++;
-        if(fan_counter==8)
-        {
-          fan_pulse = (uint32_t)(chTimeNow() - fan_pulse_start)*(uint32_t)1000/(fan_counter*2-1);
-          if(fan_pulse)
-            fan_rpm = (uint32_t)60/4*(uint32_t)S2ST(1)*1000/(uint32_t)fan_pulse;
-          else
-            fan_rpm = 0;
-          fan_pulse_start = 0; 
-        }
-      }
-      else
-      {
-        fan_pulse_start = 0; 
-      }
-    }
-  }
-}
-
-void checkFanSpeedInt()
-{
-  ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-  {
-    if(fan_stopped)
-    {
-        fan_pulse_start = 0;
-        fan_rpm = 0;
-        fan_pulse = 0;
-        fan_stopped = 0;
-    }
-    else
-      fan_stopped = 1;
-  }      
-}
-
-uint16_t getFanRPM()
-{
-  uint16_t result;
-  ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-  {
-    result = fan_rpm;
-  }      
-  return result;
-}
-
-#ifdef	HAS_TEMP_SENSOR
-//========================== TEMPERATURE SENSOR   =======================
-static OneWire  tempSensorData(PIN_TEMP);
-static DallasTemperature tempSensor(&tempSensorData);
-static dynamicDelay_c tempSensorDelay;
-
-static WORKING_AREA(waTempSensorThread, 64);
-static msg_t TempSensorThread(void *arg) {
-  tempSensor.setWaitForConversion(false);
-  tempSensorDelay.start();
-  while(true)
-  {
-    if(tempSensor.getDeviceCount()==0)
-      tempSensor.begin();
-    if(tempSensor.getDeviceCount()>0)
-    {
-      tempSensor.requestTemperatures();
-      chThdSleepMilliseconds(850);
-      float fTemp = tempSensor.getTempCByIndex(0);
-#ifdef  DEBUG_TEMP      
-      Serial.print(" ");
-      Serial.print(fTemp);
-      Serial.print(" ");  
-      Serial.print(getFanRPM());
-      Serial.print(" ");  
-#endif      
-      if((fTemp!=DEVICE_DISCONNECTED)&&(fTemp<=80)&&(fTemp>=15))
-      {
-        int16_t tempC = ceil(fTemp*10-0.5);
-        if(tempC<0)
-          tempC=0;
-        if(tempC>250)
-        {
-        	tempC += (tempC-250)/2;
-        }
-        tempC += 100;
-        fan.setTemp(tempC,1);
-      }
-    }
-    chThdSleepMilliseconds(10);
-    tempSensorDelay.delay(1000);
-    checkFanSpeedInt();
-  }
-  return 0;
-}
-//=======================================================================
-#endif
 #endif
 
 #define checkInput(VALUES,VALUE,MASK) {if(VALUE)VALUES|=MASK;}
@@ -300,20 +141,21 @@ static byte_t  btnLedScript_ID02[] = { LCSC_FADE, BTN_LED_MAX/2, LCS_TIME_MS(150
 static ledScript_t  btnLedScriptsArray[] = {LED_SCRIPT(btnLedScript_ID01,1),LED_SCRIPT(btnLedScript_ID02,2)};
 static ledScripts_t  btnLedScripts = { (sizeof btnLedScriptsArray)/sizeof(ledScript_t) , btnLedScriptsArray };
 //========================== BTN LED SCRIPTS ============================
-static ledController_c btnLed(PIN_BTN_LED,&btnLedScripts);
-static WORKING_AREA(waBtnLedThread, 64);
-static msg_t BtnLedThread(void *arg) {
+static ledController_c btnLed(PIN_BTN_LED,0,&btnLedScripts);
+static ledController_c btn2Led(PIN_BTN2_LED,1,&btnLedScripts);
+static TaskHandle_t waBtnLedThread;
+static void BtnLedThread(void *arg) {
+  {
+    uni_locker lock(globalMutex);
+    btnLed.begin();
+    btn2Led.begin();
+  }
   while(1)
-    btnLed.run();
-  return 0;
-}
-
-static ledController_c btn2Led(PIN_BTN2_LED,&btnLedScripts);
-static WORKING_AREA(waBtn2LedThread, 64);
-static msg_t Btn2LedThread(void *arg) {
-  while(1)
-    btn2Led.run();
-  return 0;
+  {
+    btnLed.loop();
+    btn2Led.loop();
+    delay(10);
+  }
 }
 
 #ifdef MAIN_BTN_PULLUP
@@ -326,8 +168,8 @@ static input_c  input2(PIN_INP2,INP_GUARD_TIME,0,1);
 static dynamicDelayWithSignal_c controllerDelay;
 
 
-static WORKING_AREA(waControllerThread, 64);
-static msg_t ControllerThread(void *arg) {
+static TaskHandle_t waControllerThread;
+static void ControllerThread(void *arg) {
   byte_t lastMode = 100;
 
   pinMode(PIN_LED, OUTPUT);
@@ -339,7 +181,7 @@ static msg_t ControllerThread(void *arg) {
   btn2Led.setOFF();
 
   controllerDelay.start();
-  while (TRUE) {
+  while (true) {
     byte_t currentMode = isStandaloneMode;
     if(currentMode!=lastMode)
     {
@@ -350,9 +192,6 @@ static msg_t ControllerThread(void *arg) {
       else
       {
         digitalWrite(PIN_LED, LOW);
-#ifdef HAS_FAN
-        fan.setMode(AFM_AUTO);
-#endif
       }
     }
 
@@ -378,8 +217,8 @@ static msg_t ControllerThread(void *arg) {
       byte_t currentOutputsValue;
       byte_t currentLed1Value;
       byte_t currentLed2Value;
-      ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
+        uni_locker lock(globalMutex);
         currentOutputsValue = outputsValue;
         currentLed1Value = led1Value;
         currentLed2Value = led2Value;
@@ -431,17 +270,15 @@ static msg_t ControllerThread(void *arg) {
       checkInput(currentInputsValue,input2.getValue(now),AIM_INP2);
       if(inputsValue != currentInputsValue)
       {
-        ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-          inputsValue = currentInputsValue;
-        }
+        uni_locker lock(globalMutex);
+        inputsValue = currentInputsValue;
       }
     }
     controllerDelay.delay(10);
   }
-  return 0;
 }
 
-static WORKING_AREA(waSerialThread, 128);
+static TaskHandle_t waSerialThread;
 static comm_protocol_parser_c protParser(cp_prefix_t(APP_1, APP_2),MAX_PACKET_SIZE);
 
 int bytesAvailable;
@@ -451,52 +288,50 @@ byte_t incomingByte = 0;
 byte_t *packetBuffer;
 byte_t newPacketBuffer[MAX_PACKET_SIZE+4];
 uint32_t lastHostActivityTime;
-#ifdef HAS_FAN
-fan_data_t fan_data;
-#endif
 
-#define sendPacket(P,V) Serial.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),P,&V,sizeof(V)))
+#define sendPacket(P,V) Serial2.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),P,&V,sizeof(V)))
 #define sendOutput(V) sendPacket(ACC_OSTAT,V)
 
-static msg_t SerialThread(void *arg) {
+static void SerialThread(void *arg) {
   lastHostActivityTime = millis();
-  Serial.begin(9600);
+  Serial2.begin(9600,SERIAL_8N1,PIN_UART_RX,PIN_UART_TX);
   packetBuffer = protParser.get_packet_buffer();
-  while (TRUE) {
+  while (true) {
     if(!isStandaloneMode)
     {
       byte_t currentInputsValue;
-      ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
+        uni_locker lock(globalMutex);
         currentInputsValue = inputsValue;
       }
   
       if(lastInputsValue!=currentInputsValue)
       {
         lastInputsValue = currentInputsValue;
-        Serial.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),ACC_ISTAT,&lastInputsValue,sizeof(lastInputsValue)));
+        Serial2.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),ACC_ISTAT,&lastInputsValue,sizeof(lastInputsValue)));
       }
 #ifdef HAS_ULTRASONIC
       int16_t currentUValue;
-      ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+
       {
+        uni_locker lock(globalMutex);
       	currentUValue =  ultrasonicValue;
       }
 
       if(abs((int32_t)lastUltrasonicValue-(int32_t)currentUValue)>=(lastUltrasonicValue/10))
       {
       	lastUltrasonicValue = currentUValue;
-        Serial.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),ACC_ULTRASONIC_DATA,&lastUltrasonicValue,sizeof(lastUltrasonicValue)));
+        Serial2.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),ACC_ULTRASONIC_DATA,&lastUltrasonicValue,sizeof(lastUltrasonicValue)));
       }
 #endif
     }
 
-    bytesAvailable = Serial.available();
+    bytesAvailable = Serial2.available();
     if(bytesAvailable>0)
     {
       while(bytesAvailable>0)
       {
-        incomingByte = Serial.read();
+        incomingByte = Serial2.read();
         if(protParser.post_data(&incomingByte,sizeof(byte_t))== CP_RESULT_PACKET_READY)
         {
           if(isStandaloneMode)
@@ -513,7 +348,7 @@ static msg_t SerialThread(void *arg) {
             {
             case ACC_VER:
               {
-                Serial.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),command,AC_PROTOCOL_VERSION,sizeof(AC_PROTOCOL_VERSION)-1));
+                Serial2.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),command,AC_PROTOCOL_VERSION,sizeof(AC_PROTOCOL_VERSION)-1));
                 break;
               }
             case ACC_GET_OSTAT:
@@ -532,7 +367,7 @@ static msg_t SerialThread(void *arg) {
 
             case ACC_PING:
               {
-                Serial.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),ACC_PING,NULL,0));
+                Serial2.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),ACC_PING,NULL,0));
                 break;
               }              
               
@@ -542,15 +377,13 @@ static msg_t SerialThread(void *arg) {
                 {
                   if(packetBuffer[1])
                   {
-                    ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-                      outputsValue |= AOM_RELAY;
-                    }
+                    uni_locker lock(globalMutex);
+                    outputsValue |= AOM_RELAY;
                   }
                   else
                   {
-                    ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-                      outputsValue &= ~AOM_RELAY;
-                    }
+                    uni_locker lock(globalMutex);
+                    outputsValue &= ~AOM_RELAY;
                   }
                 }
                 byte_t tmp = outputsValue;
@@ -558,54 +391,12 @@ static msg_t SerialThread(void *arg) {
                 controllerDelay.signal();
                 break;
               }
-#ifdef	HAS_FAN
-            case ACC_SET_FAN_SPEED:
-              {
-                if(packetSize>=2)
-                {
-                  fan.setSpeed(packetBuffer[1]);
-                  fan.getData(fan_data);
-                  sendPacket(ACC_FAN_DATA,fan_data);
-                }
-                break;
-              }
-              
-            case ACC_SET_FAN_MODE:
-              {
-                if(packetSize>=2)
-                {
-                  fan.setMode(packetBuffer[1]);
-                  fan.getData(fan_data);
-                  sendPacket(ACC_FAN_DATA,fan_data);
-                }
-                break;
-              }
-              
-            case ACC_SET_FAN_TEMP:
-              {
-                if(packetSize>=2)
-                {
-                  fan.setTemp(packetBuffer[1]*10,2);
-                  fan.getData(fan_data);
-                  sendPacket(ACC_FAN_DATA,fan_data);
-                }
-                break;
-              }     
-     
-            case ACC_FAN_DATA:
-              {
-                fan.getData(fan_data);
-                sendPacket(ACC_FAN_DATA,fan_data);
-                break;
-              }                
-#endif
             case ACC_SET_BTN_LED:
               {
                 if(packetSize>=2)
                 {
-                  ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-                    led1Value =  packetBuffer[1];
-                  }
+                  uni_locker lock(globalMutex);
+                  led1Value =  packetBuffer[1];
                 }
                 sendPacket(ACC_SET_BTN_LED,packetBuffer[1]);
                 controllerDelay.signal();
@@ -616,9 +407,8 @@ static msg_t SerialThread(void *arg) {
               {
                 if(packetSize>=2)
                 {
-                  ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-                    led2Value =  packetBuffer[1];
-                  }
+                  uni_locker lock(globalMutex);
+                  led2Value =  packetBuffer[1];
                 }
                 sendPacket(ACC_SET_BTN2_LED,packetBuffer[1]);
                 controllerDelay.signal();
@@ -627,7 +417,7 @@ static msg_t SerialThread(void *arg) {
 
             default:
               {
-                Serial.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),ACC_ERROR,NULL,0));
+                Serial2.write(newPacketBuffer,protParser.create_packet(newPacketBuffer,sizeof(newPacketBuffer),ACC_ERROR,NULL,0));
                 break;
               }
             };
@@ -647,70 +437,56 @@ static msg_t SerialThread(void *arg) {
         lastHostActivityTime = millis();
       }
     }
-    chThdSleepMilliseconds(1);
+    delay(1);
   }
-  return 0;
 }
 
+void setup() 
+{
+  setCpuFrequencyMhz(80); 
+  Serial.begin(115200);
 
-//------------------------------------------------------------------------------
-void setup() {
-  // initialize ChibiOS with interrupts disabled
-  // ChibiOS will enable interrupts
-  Serial.begin(9600);
+  uint32_t seed = esp_random();
+  DEBUG_MSG("Setting random seed %u\n", seed);
+  randomSeed(seed); // ESP docs say this is fairly random
 
-#ifdef HAS_FAN
-  fan_speed_bit = digitalPinToBitMask(PIN_FAN_SPEED);
-  fan_speed_port = digitalPinToPort(PIN_FAN_SPEED);
+  DEBUG_MSG("CPU Clock: %d\n", getCpuFrequencyMhz());
+  DEBUG_MSG("Total heap: %d\n", ESP.getHeapSize());
+  DEBUG_MSG("Free heap: %d\n", ESP.getFreeHeap());
+  DEBUG_MSG("Total PSRAM: %d\n", ESP.getPsramSize());
+  DEBUG_MSG("Free PSRAM: %d\n", ESP.getFreePsram());
 
-  attachInterrupt(INT_FAN_SPEED,fanSpeedInt,CHANGE);
-#endif
-  
-  TCCR2B = 0x1;
+  auto res = esp_task_wdt_init(APP_WATCHDOG_SECS_INIT, true);
+  assert(res == ESP_OK);
+
+  res = esp_task_wdt_add(NULL);
+  assert(res == ESP_OK);
+
+  esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
+
   isStandaloneMode = 1;
-  cli();
-  halInit();
-  chSysInit();
-
-  tprio_t currentPriority = chThdGetPriority();
-  chThdSetPriority(NORMALPRIO+5);
 
   resetIOValues();
-
-#ifdef	HAS_FAN
-#ifdef	HAS_TEMP_SENSOR
-  chThdCreateStatic(waTempSensorThread, sizeof(waTempSensorThread),
-  NORMALPRIO + 4, TempSensorThread, NULL);
-#endif
-#endif
-
+  vTaskPrioritySet( NULL, tskIDLE_PRIORITY + 5 );
 #ifdef HAS_ULTRASONIC
-  chThdCreateStatic(waUltrasonicSensorThread, sizeof(waUltrasonicSensorThread),
-  NORMALPRIO + 4, UltrasonicSensorThread, NULL);
+  xTaskCreatePinnedToCore(UltrasonicSensorThread, "Ultrasonic Thread", 1024, NULL, tskIDLE_PRIORITY+4, &waUltrasonicSensorThread,1);
 #endif
-  chThdCreateStatic(waBtnLedThread, sizeof(waBtnLedThread),
-  NORMALPRIO + 3, BtnLedThread, NULL);
+  xTaskCreatePinnedToCore(BtnLedThread, "BtnLed Thread", 4096, NULL, tskIDLE_PRIORITY+3, &waBtnLedThread,0);
 
-  chThdCreateStatic(waBtn2LedThread, sizeof(waBtn2LedThread),
-  NORMALPRIO + 3, Btn2LedThread, NULL);
+  xTaskCreatePinnedToCore(ControllerThread, "Controller Thread", 4096, NULL, tskIDLE_PRIORITY+2, &waControllerThread,1);
+
+  xTaskCreatePinnedToCore(SerialThread, "Controller Thread", 4096, NULL, tskIDLE_PRIORITY+1, &waSerialThread,1);
+
+  DEBUG_MSG("Started\n");
+  delay(100);
+  vTaskPrioritySet( NULL, tskIDLE_PRIORITY);
   
-  chThdCreateStatic(waControllerThread, sizeof(waControllerThread),
-  NORMALPRIO + 2, ControllerThread, NULL);
-
-  chThdCreateStatic(waSerialThread, sizeof(waSerialThread),
-  NORMALPRIO + 1, SerialThread, NULL);
-
-
-
-  chThdSleepMilliseconds(100);
-  
-  chThdSetPriority(currentPriority);
+  esp_task_wdt_delete(NULL);
+  esp_task_wdt_init(APP_WATCHDOG_SECS_WORK, true);
+  esp_task_wdt_add(NULL);
 }
 
-
-//------------------------------------------------------------------------------
-// idle loop runs at NORMALPRIO
 void loop() {
-  chThdSleepMilliseconds(1);
+  esp_task_wdt_reset();  
+  delay(50);
 }
-
