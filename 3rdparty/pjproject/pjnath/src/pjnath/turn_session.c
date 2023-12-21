@@ -1,4 +1,4 @@
-/* $Id: turn_session.c 3877 2011-10-31 10:28:34Z ming $ */
+/* $Id: turn_session.c 4383 2013-02-27 10:06:06Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -421,7 +421,10 @@ static void sess_shutdown(pj_turn_session *sess,
 	/* This may recursively call this function again with
 	 * state==PJ_TURN_STATE_DEALLOCATED.
 	 */
+	/* No need to deallocate as we're already deallocating!
+	 * See https://trac.pjsip.org/repos/ticket/1551
 	send_refresh(sess, 0);
+	*/
 	break;
     case PJ_TURN_STATE_DEALLOCATED:
     case PJ_TURN_STATE_DESTROYING:

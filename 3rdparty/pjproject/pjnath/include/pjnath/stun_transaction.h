@@ -1,4 +1,4 @@
-/* $Id: stun_transaction.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: stun_transaction.h 4407 2013-02-27 15:02:03Z riza $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -234,13 +234,16 @@ PJ_DECL(pj_status_t) pj_stun_client_tsx_send_msg(pj_stun_client_tsx *tsx,
  * but this functionality is needed by ICE.
  *
  * @param tsx		The STUN client transaction instance.
+ * @param mod_count     Boolean flag to indicate whether transmission count
+ *                      needs to be incremented.
  *
  * @return		PJ_SUCCESS on success, or PJNATH_ESTUNDESTROYED 
  *			when the user has destroyed the transaction in 
  *			\a on_send_msg() callback, or any other error code
  *			as returned by \a on_send_msg() callback.
  */
-PJ_DECL(pj_status_t) pj_stun_client_tsx_retransmit(pj_stun_client_tsx *tsx);
+PJ_DECL(pj_status_t) pj_stun_client_tsx_retransmit(pj_stun_client_tsx *tsx,
+                                                   pj_bool_t mod_count);
 
 
 /**

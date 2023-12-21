@@ -1,4 +1,4 @@
-/* $Id: systest.c 4074 2012-04-24 07:38:41Z ming $ */
+/* $Id: systest.c 4426 2013-03-07 05:08:10Z riza $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -88,12 +88,16 @@ static gui_menu root_menu = {
 
 /*****************************************************************/
 
+#if defined(PJ_DARWINOS) && PJ_DARWINOS!=0
 PJ_INLINE(char *) add_path(const char *path, const char *fname)
 {
     strncpy(fpath, path, PATH_LENGTH);
     strncat(fpath, fname, PATH_LENGTH);
     return fpath;
 }
+#else
+#   define add_path(path, fname) fname
+#endif
 
 static void exit_app(void)
 {

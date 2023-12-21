@@ -1,10 +1,13 @@
     <div id="sidebar">
-      <h1>Intercom Pages</h1>
+      <h1>Pages</h1>
       <div id="menu">
-        <a  <?php  if(preg_match("/index.php/",$_SERVER['REQUEST_URI'])|| ($_SERVER['REQUEST_URI']=='/') ) { echo 'class="active"'; } ?> href="index.php">Home</a>
-        <a  href="/db_options.php">Database</a>
-        <a  href="/camera/index.html">Camera</a>
-        <a  href="/filemanager/filemanager.php">File manager</a>
-        <a  <?php  if(preg_match("/logs.php/",$_SERVER['REQUEST_URI']) ) { echo 'class="active"'; } ?> href="logs.php">Logs</a>        
+      	<?php  
+      	www_menu_item("Home","index.php",true);
+      	www_menu_item("System","sys_ip.php",false);
+      	www_menu_item("Database","db_options.php",false);
+      	www_menu_item("Camera","/camera/index.html",false);
+      	www_menu_item("File Manager","/filemanager/filemanager.php",false);
+      	www_menu_item("Intercom Logs","logs.php",false);
+      	?>
       </div>
     </div>

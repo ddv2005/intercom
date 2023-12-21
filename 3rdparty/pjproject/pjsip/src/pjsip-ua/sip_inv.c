@@ -1,4 +1,4 @@
-/* $Id: sip_inv.c 4067 2012-04-23 10:22:49Z ming $ */
+/* $Id: sip_inv.c 4406 2013-02-27 14:55:02Z riza $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -362,6 +362,7 @@ static const pjmedia_sdp_session *inv_has_pending_answer(pjsip_inv_session *inv,
 static pj_status_t inv_send_ack(pjsip_inv_session *inv, pjsip_event *e)
 {
     pjsip_rx_data *rdata;
+    pjsip_event ack_e;
     pj_status_t status;
 
     if (e->type == PJSIP_EVENT_TSX_STATE)
@@ -397,7 +398,11 @@ static pj_status_t inv_send_ack(pjsip_inv_session *inv, pjsip_event *e)
     } else {
 	status = pjsip_inv_create_ack(inv, rdata->msg_info.cseq->cseq,
 				      &inv->last_ack);
+	if (status != PJ_SUCCESS)
+	    return status;
     }
+
+    PJSIP_EVENT_INIT_TX_MSG(ack_e, inv->last_ack);
 
     /* Send ACK */
     status = pjsip_dlg_send_request(inv->dlg, inv->last_ack, -1, NULL);
@@ -413,7 +418,7 @@ static pj_status_t inv_send_ack(pjsip_inv_session *inv, pjsip_event *e)
      * (this may have been a late 200/OK response.
      */
     if (inv->state < PJSIP_INV_STATE_CONFIRMED) {
-	inv_set_state(inv, PJSIP_INV_STATE_CONFIRMED, e);
+	inv_set_state(inv, PJSIP_INV_STATE_CONFIRMED, &ack_e);
     }
 
     return PJ_SUCCESS;
@@ -1706,7 +1711,7 @@ static pj_status_t inv_check_sdp_in_incoming_msg( pjsip_inv_session *inv,
 	if (tsx->role == PJSIP_ROLE_UAC &&
 	    rdata->msg_info.msg->line.status.code/100 == 2 &&
 	    tsx_inv_data->done_early &&
-	    pj_strcmp(&tsx_inv_data->done_tag, &res_tag))
+	    pj_stricmp(&tsx_inv_data->done_tag, &res_tag))
 	{
 	    const pjmedia_sdp_session *reoffer_sdp = NULL;
 
@@ -2478,6 +2483,7 @@ PJ_DEF(pj_status_t) pjsip_inv_update (	pjsip_inv_session *inv,
     pjsip_contact_hdr *contact_hdr = NULL;
     pjsip_tx_data *tdata = NULL;
     pjmedia_sdp_session *sdp_copy;
+    const pjsip_hdr *hdr;
     pj_status_t status = PJ_SUCCESS;
 
     /* Verify arguments. */
@@ -2544,12 +2550,23 @@ PJ_DEF(pj_status_t) pjsip_inv_update (	pjsip_inv_session *inv,
 	pjsip_create_sdp_body(tdata->pool, sdp_copy, &tdata->msg->body);
     }
 
-    /* Unlock dialog. */
-    pjsip_dlg_dec_lock(inv->dlg);
+    /* Session Timers spec (RFC 4028) says that Supported header MUST be put
+     * in refresh requests. So here we'll just put the Supported header in
+     * all cases regardless of whether session timers is used or not, just
+     * in case this is a common behavior.
+     */
+    hdr = pjsip_endpt_get_capability(inv->dlg->endpt, PJSIP_H_SUPPORTED, NULL);
+    if (hdr) {
+	pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)
+			  pjsip_hdr_shallow_clone(tdata->pool, hdr));
+    }
 
     status = pjsip_timer_update_req(inv, tdata);
     if (status != PJ_SUCCESS)
 	goto on_error;
+
+    /* Unlock dialog. */
+    pjsip_dlg_dec_lock(inv->dlg);
 
     *p_tdata = tdata;
 
@@ -2849,8 +2866,16 @@ static void inv_respond_incoming_update(pjsip_inv_session *inv,
 
     neg_state = pjmedia_sdp_neg_get_state(inv->neg);
 
+    /* If UPDATE doesn't contain SDP, just respond with 200/OK.
+     * This is a valid scenario according to session-timer draft.
+     */
+    if (rdata->msg_info.msg->body == NULL) {
+
+	status = pjsip_dlg_create_response(inv->dlg, rdata, 
+					   200, NULL, &tdata);
+    }
     /* Send 491 if we receive UPDATE while we're waiting for an answer */
-    if (neg_state == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER) {
+    else if (neg_state == PJMEDIA_SDP_NEG_STATE_LOCAL_OFFER) {
 	status = pjsip_dlg_create_response(inv->dlg, rdata, 
 					   PJSIP_SC_REQUEST_PENDING, NULL,
 					   &tdata);
@@ -2859,18 +2884,18 @@ static void inv_respond_incoming_update(pjsip_inv_session *inv,
      * receive UPDATE while we haven't sent answer.
      */
     else if (neg_state == PJMEDIA_SDP_NEG_STATE_REMOTE_OFFER ||
-	     neg_state == PJMEDIA_SDP_NEG_STATE_WAIT_NEGO) {
-	status = pjsip_dlg_create_response(inv->dlg, rdata, 
+	     neg_state == PJMEDIA_SDP_NEG_STATE_WAIT_NEGO)
+    {
+        pjsip_retry_after_hdr *ra_hdr;
+	int val;
+
+        status = pjsip_dlg_create_response(inv->dlg, rdata, 
 					   PJSIP_SC_INTERNAL_SERVER_ERROR,
 					   NULL, &tdata);
 
-    /* If UPDATE doesn't contain SDP, just respond with 200/OK.
-     * This is a valid scenario according to session-timer draft.
-     */
-    } else if (rdata->msg_info.msg->body == NULL) {
-
-	status = pjsip_dlg_create_response(inv->dlg, rdata, 
-					   200, NULL, &tdata);
+        val = (pj_rand() % 10);
+        ra_hdr = pjsip_retry_after_hdr_create(tdata->pool, val);
+        pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)ra_hdr);
 
     } else {
 	/* We receive new offer from remote */
@@ -3197,8 +3222,7 @@ static pj_bool_t handle_uac_tsx_response(pjsip_inv_session *inv,
 	((tsx->status_code == PJSIP_SC_CALL_TSX_DOES_NOT_EXIST &&
 	    tsx->method.id != PJSIP_CANCEL_METHOD) ||
 	 tsx->status_code == PJSIP_SC_REQUEST_TIMEOUT ||
-	 tsx->status_code == PJSIP_SC_TSX_TIMEOUT ||
-	 tsx->status_code == PJSIP_SC_TSX_TRANSPORT_ERROR))
+	 tsx->status_code == PJSIP_SC_TSX_TIMEOUT))
     {
 	pjsip_tx_data *bye;
 	pj_status_t status;

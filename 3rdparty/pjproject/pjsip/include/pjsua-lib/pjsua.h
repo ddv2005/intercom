@@ -1,4 +1,4 @@
-/* $Id: pjsua.h 4045 2012-04-13 04:13:24Z bennylp $ */
+/* $Id: pjsua.h 4387 2013-02-27 10:16:08Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -653,9 +653,10 @@ typedef struct pjsua_callback
      *	  callback.
      *  - it may delay the processing of the request, for example to request
      *    user permission whether to accept or reject the request. In this 
-     *	  case, the application MUST set the \a code argument to 202, and 
-     *	  later calls #pjsua_pres_notify() to accept or reject the 
-     *	  subscription request.
+     *	  case, the application MUST set the \a code argument to 202, then
+     *    IMMEDIATELY calls #pjsua_pres_notify() with state
+     *    PJSIP_EVSUB_STATE_PENDING and later calls #pjsua_pres_notify()
+     *    again to accept or reject the subscription request.
      *
      * Any \a code other than 200 and 202 will be treated as 200.
      *
@@ -2240,7 +2241,8 @@ typedef struct pjsua_acc_config
 
     /** 
      * The full SIP URL for the account. The value can take name address or 
-     * URL format, and will look something like "sip:account@serviceprovider".
+     * URL format, and will look something like "sip:account@serviceprovider"
+     * or "\"Display Name\" <sip:account@provider>".
      *
      * This field is mandatory.
      */
@@ -3524,7 +3526,8 @@ PJ_DECL(pj_status_t) pjsua_call_update(pjsua_call_id call_id,
  * of the call transfer request.
  *
  * @param call_id	The call id to be transfered.
- * @param dest		Address of new target to be contacted.
+ * @param dest		URI of new target to be contacted. The URI may be
+ * 			in name address or addr-spec format.
  * @param msg_data	Optional message components to be sent with
  *			the request.
  *
@@ -4433,6 +4436,17 @@ struct pjsua_media_config
      * Default : 1
      */
     int			snd_auto_close_time;
+
+    /**
+     * Disable smart media update (ticket #1568). The smart media update
+     * will check for any changes in the media properties after a successful
+     * SDP negotiation and the media will only be reinitialized when any
+     * change is found. When it is disabled, media streams will always be
+     * reinitialized after a successful SDP negotiation.
+     *
+     * Default: PJ_FALSE
+     */
+    pj_bool_t no_smart_media_update;
 };
 
 

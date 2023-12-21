@@ -1,4 +1,4 @@
-/* $Id: session.c 3571 2011-05-19 08:05:23Z ming $ */
+/* $Id: session.c 4334 2013-01-25 06:31:05Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -670,6 +670,27 @@ PJ_DEF(pj_status_t) pjmedia_session_create( pjmedia_endpt *endpt,
     /* Copy stream info (this simple memcpy may break sometime) */
     pj_memcpy(session->stream_info, si->stream_info,
 	      si->stream_cnt * sizeof(pjmedia_stream_info));
+
+    /* Clone codec param and format info */
+    for (i=0; i<(int)si->stream_cnt; ++i) {
+        pj_strdup(pool, &session->stream_info[i].fmt.encoding_name,
+                  &si->stream_info[i].fmt.encoding_name);
+	if (session->stream_info[i].param) {
+	    session->stream_info[i].param =
+		    pjmedia_codec_param_clone(pool, si->stream_info[i].param);
+	} else {
+	    pjmedia_codec_param cp;
+	    status = pjmedia_codec_mgr_get_default_param(
+					pjmedia_endpt_get_codec_mgr(endpt),
+					&si->stream_info[i].fmt,
+					&cp);
+	    if (status != PJ_SUCCESS)
+		return status;
+
+	    session->stream_info[i].param =
+		    pjmedia_codec_param_clone(pool, &cp);
+	}
+    }
 
     /*
      * Now create and start the stream!

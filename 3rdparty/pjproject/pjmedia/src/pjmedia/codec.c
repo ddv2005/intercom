@@ -1,4 +1,4 @@
-/* $Id: codec.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: codec.c 4329 2013-01-23 02:57:30Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -38,6 +38,39 @@ struct pjmedia_codec_default_param
 
 /* Sort codecs in codec manager based on priorities */
 static void sort_codecs(pjmedia_codec_mgr *mgr);
+
+
+/*
+ * Duplicate codec parameter.
+ */
+PJ_DEF(pjmedia_codec_param*) pjmedia_codec_param_clone(
+					pj_pool_t *pool,
+					const pjmedia_codec_param *src)
+{
+    pjmedia_codec_param *p;
+    unsigned i;
+
+    PJ_ASSERT_RETURN(pool && src, NULL);
+
+    p = PJ_POOL_ZALLOC_T(pool, pjmedia_codec_param);
+
+    /* Update codec param */
+    pj_memcpy(p, src, sizeof(pjmedia_codec_param));
+    for (i = 0; i < src->setting.dec_fmtp.cnt; ++i) {
+	pj_strdup(pool, &p->setting.dec_fmtp.param[i].name,
+		  &src->setting.dec_fmtp.param[i].name);
+	pj_strdup(pool, &p->setting.dec_fmtp.param[i].val,
+		  &src->setting.dec_fmtp.param[i].val);
+    }
+    for (i = 0; i < src->setting.enc_fmtp.cnt; ++i) {
+	pj_strdup(pool, &p->setting.enc_fmtp.param[i].name,
+		  &src->setting.enc_fmtp.param[i].name);
+	pj_strdup(pool, &p->setting.enc_fmtp.param[i].val,
+		  &src->setting.enc_fmtp.param[i].val);
+    }
+
+    return p;
+}
 
 
 /*

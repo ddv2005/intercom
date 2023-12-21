@@ -131,7 +131,7 @@ void pjs_intercom_system::timer()
 			m_last_log_flush = now;
 			pj_file_flush(pjsua_get_var()->log_file);
 		}
-
+		check_calls_media();
 	}
 
 	schedule_timer();
@@ -512,6 +512,42 @@ bool pjs_intercom_system::call_is_active(int callid)
 {
 	return pjsua_call_is_active(callid);
 }
+
+void pjs_intercom_system::check_calls_media()
+{
+	unsigned result = 0;
+	pjsua_call_id cids[PJSUA_MAX_CALLS];
+	m_scripts_mutex.lock();
+	for (pjs_intercom_calls_map_itr citr = m_calls.begin();
+			citr != m_calls.end(); citr++)
+	{
+		pjmedia_session *session = pjsua_call_get_media_session(citr->first);
+		if(session){
+			 pjmedia_rtcp_stat stat;
+			 memset(&stat,0,sizeof(stat));
+			 if(pjmedia_session_get_stream_stat(session,0,&stat)==PJ_SUCCESS)
+			 {
+				 pj_time_val now;
+  			 pj_gettimeofday(&now);
+  			 if(stat.rx.update.sec>0)
+  			 {
+  				 PJ_LOG_(INFO_LEVEL, (__FILE__,"RTP timeout %ld %d",(now.sec-stat.rx.update.sec),citr->first));
+  				 if((now.sec-stat.rx.update.sec)>30)
+  				 {
+  					 PJ_LOG_(INFO_LEVEL, (__FILE__,"Disconnect call by RTP timeout %d",citr->first));
+  					 cids[result++] = citr->first;
+  				 }
+  			 }
+			 }
+		}
+	}
+	m_scripts_mutex.unlock();
+	for (unsigned i = 0; i < result; i++)
+	{
+		pjsua_call_hangup(cids[i], 200, NULL, NULL);
+	}
+}
+
 
 unsigned pjs_intercom_system::hangup_calls_by_tag(pj_int32_t tag, unsigned code)
 {

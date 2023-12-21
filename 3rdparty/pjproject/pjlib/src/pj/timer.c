@@ -1,4 +1,4 @@
-/* $Id: timer.c 3456 2011-03-16 09:22:24Z ming $ */
+/* $Id: timer.c 4394 2013-02-27 12:02:42Z ming $ */
 /* 
  * The PJLIB's timer heap is based (or more correctly, copied and modied)
  * from ACE library by Douglas C. Schmidt. ACE is an excellent OO framework
@@ -497,15 +497,16 @@ PJ_DEF(unsigned) pj_timer_heap_poll( pj_timer_heap_t *ht,
 
     PJ_ASSERT_RETURN(ht, 0);
 
+    lock_timer_heap(ht);
     if (!ht->cur_size && next_delay) {
 	next_delay->sec = next_delay->msec = PJ_MAXINT32;
+        unlock_timer_heap(ht);
 	return 0;
     }
 
     count = 0;
     pj_gettickcount(&now);
 
-    lock_timer_heap(ht);
     while ( ht->cur_size && 
 	    PJ_TIME_VAL_LTE(ht->heap[0]->_timer_value, now) &&
             count < ht->max_entries_per_poll ) 

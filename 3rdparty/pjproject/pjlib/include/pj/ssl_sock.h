@@ -1,4 +1,4 @@
-/* $Id: ssl_sock.h 3942 2012-01-16 05:05:47Z nanang $ */
+/* $Id: ssl_sock.h 4376 2013-02-27 09:41:37Z nanang $ */
 /* 
  * Copyright (C) 2009-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -541,6 +541,11 @@ typedef struct pj_ssl_sock_info
      * Status of peer certificate verification.
      */
     pj_uint32_t		verify_status;
+
+    /**
+     * Last native error returned by the backend.
+     */
+    unsigned long	last_native_err;
 
 } pj_ssl_sock_info;
 

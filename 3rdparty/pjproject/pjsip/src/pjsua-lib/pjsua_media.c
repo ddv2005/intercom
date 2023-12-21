@@ -1,4 +1,4 @@
-/* $Id: pjsua_media.c 4065 2012-04-21 02:17:07Z bennylp $ */
+/* $Id: pjsua_media.c 4428 2013-03-07 08:25:35Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -857,18 +857,12 @@ static void on_ice_complete(pjmedia_transport *tp,
 	     */
 	    pjmedia_transport_info tpinfo;
 	    pjmedia_ice_transport_info *ii = NULL;
-	    unsigned i;
 
 	    pjmedia_transport_info_init(&tpinfo);
 	    pjmedia_transport_get_info(tp, &tpinfo);
-	    for (i=0; i<tpinfo.specific_info_cnt; ++i) {
-		if (tpinfo.spc_info[i].type==PJMEDIA_TRANSPORT_TYPE_ICE) {
-		    ii = (pjmedia_ice_transport_info*)
-			 tpinfo.spc_info[i].buffer;
-		    break;
-		}
-	    }
-
+	    ii = (pjmedia_ice_transport_info*)
+		 pjmedia_transport_info_get_spc_info(
+					 &tpinfo, PJMEDIA_TRANSPORT_TYPE_ICE);
 	    if (ii && ii->role==PJ_ICE_SESS_ROLE_CONTROLLING &&
 		pj_sockaddr_cmp(&tpinfo.sock_info.rtp_addr_name,
 				&pjsua_var.calls[id].med_rtp_addr))
@@ -1566,6 +1560,122 @@ static void stop_media_session(pjsua_call_id call_id)
     call->media_st = PJSUA_CALL_MEDIA_NONE;
 }
 
+/* Match codec fmtp. This will compare the values and the order. */
+static pj_bool_t match_codec_fmtp(const pjmedia_codec_fmtp *fmtp1,
+				  const pjmedia_codec_fmtp *fmtp2)
+{
+    unsigned i;
+
+    if (fmtp1->cnt != fmtp2->cnt)
+	return PJ_FALSE;
+
+    for (i = 0; i < fmtp1->cnt; ++i) {
+	if (pj_stricmp(&fmtp1->param[i].name, &fmtp2->param[i].name))
+	    return PJ_FALSE;
+	if (pj_stricmp(&fmtp1->param[i].val, &fmtp2->param[i].val))
+	    return PJ_FALSE;
+    }
+
+    return PJ_TRUE;
+}
+
+
+static pj_bool_t is_ice_running(pjmedia_transport *tp)
+{
+    pjmedia_transport_info tpinfo;
+    pjmedia_ice_transport_info *ice_info;
+
+    pjmedia_transport_info_init(&tpinfo);
+    pjmedia_transport_get_info(tp, &tpinfo);
+    ice_info = (pjmedia_ice_transport_info*)
+	       pjmedia_transport_info_get_spc_info(&tpinfo,
+						   PJMEDIA_TRANSPORT_TYPE_ICE);
+    return (ice_info && ice_info->sess_state == PJ_ICE_STRANS_STATE_RUNNING);
+}
+
+
+static pj_bool_t is_media_changed(const pjsua_call *call,
+				  int new_audio_idx,
+				  const pjmedia_session_info *new_sess)
+{
+    pjmedia_session_info old_sess;
+    const pjmedia_stream_info *old_si = NULL;
+    const pjmedia_stream_info *new_si;
+    const pjmedia_codec_info *old_ci = NULL;
+    const pjmedia_codec_info *new_ci;
+    const pjmedia_codec_param *old_cp = NULL;
+    const pjmedia_codec_param *new_cp;
+
+    /* Init new stream info (shortcut vars) */
+    new_si = &new_sess->stream_info[new_audio_idx];
+    new_ci = &new_si->fmt;
+    new_cp = new_si->param;
+
+    /* Get current stream info */
+    if (call->session) {
+	pjmedia_session_get_info(call->session, &old_sess);
+	/* PJSUA always uses one stream per session */
+	pj_assert(old_sess.stream_cnt == 1);
+	old_si = &old_sess.stream_info[0];
+	old_ci = &old_si->fmt;
+	old_cp = old_si->param;
+    }
+
+    /* Check for audio index change (is this really necessary?) */
+    if (new_audio_idx != call->audio_idx)
+	return PJ_TRUE;
+
+    /* Check if stream stays inactive */
+    if (!old_si && new_si->dir == PJMEDIA_DIR_NONE)
+	return PJ_FALSE;
+
+    /* Compare media direction */
+    if (!old_si || (old_si && old_si->dir != new_si->dir))
+	return PJ_TRUE;
+
+    /* Compare remote RTP address. If ICE is running, change in default
+     * address can happen after negotiation, this can be handled
+     * internally by ICE and does not need to cause media restart.
+     */
+    if (!is_ice_running(call->med_tp) &&
+	pj_sockaddr_cmp(&old_si->rem_addr, &new_si->rem_addr))
+    {
+	return PJ_TRUE;
+    }
+
+    /* Compare codec info */
+    if (pj_stricmp(&old_ci->encoding_name, &new_ci->encoding_name) ||
+	old_ci->clock_rate != new_ci->clock_rate ||
+	old_ci->channel_cnt != new_ci->channel_cnt ||
+	//old_si->rx_pt != new_si->rx_pt ||
+	old_si->tx_pt != new_si->tx_pt ||
+	old_si->rx_event_pt != new_si->tx_event_pt ||
+	old_si->tx_event_pt != new_si->tx_event_pt)
+    {
+	return PJ_TRUE;
+    }
+
+    /* Compare codec param
+     * Disable checking of VAD setting since VAD setting can be overwritten
+     * by application setting in pjsua_media_cfg.
+     */
+    if (old_cp->setting.frm_per_pkt != new_cp->setting.frm_per_pkt ||
+	old_cp->setting.vad != new_cp->setting.vad ||
+	old_cp->setting.cng != new_cp->setting.cng ||
+	old_cp->setting.plc != new_cp->setting.plc ||
+	old_cp->setting.penh != new_cp->setting.penh ||
+	!match_codec_fmtp(&old_cp->setting.dec_fmtp,
+			  &new_cp->setting.dec_fmtp) ||
+	!match_codec_fmtp(&old_cp->setting.enc_fmtp,
+			  &new_cp->setting.enc_fmtp))
+    {
+	return PJ_TRUE;
+    }
+
+    return PJ_FALSE;
+}
+
+
 pj_status_t pjsua_media_channel_deinit(pjsua_call_id call_id)
 {
     pjsua_call *call = &pjsua_var.calls[call_id];
@@ -1583,8 +1693,8 @@ pj_status_t pjsua_media_channel_deinit(pjsua_call_id call_id)
     if (call->med_orig && call->med_tp && call->med_tp != call->med_orig) {
 	pjmedia_transport_close(call->med_tp);
 	call->med_tp = call->med_orig;
-        call->med_orig = NULL;
     }
+    call->med_orig = NULL;
 
     check_snd_dev_idle();
 
@@ -1613,48 +1723,184 @@ static void dtmf_callback(pjmedia_stream *strm, void *user_data,
 }
 
 
+static pj_status_t audio_channel_update(pjsua_call_id call_id,
+					int prev_media_st,
+					pjmedia_session_info *sess_info,
+					const pjmedia_sdp_session *local_sdp,
+					const pjmedia_sdp_session *remote_sdp)
+{
+    pjsua_call *call = &pjsua_var.calls[call_id];
+    pjmedia_stream_info *si = &sess_info->stream_info[0];
+    pjmedia_port *media_port;
+    pj_status_t status;
+
+    PJ_UNUSED_ARG(local_sdp);
+    PJ_UNUSED_ARG(remote_sdp);
+    
+    /* Optionally, application may modify other stream settings here
+     * (such as jitter buffer parameters, codec ptime, etc.)
+     */
+    si->jb_init = pjsua_var.media_cfg.jb_init;
+    si->jb_min_pre = pjsua_var.media_cfg.jb_min_pre;
+    si->jb_max_pre = pjsua_var.media_cfg.jb_max_pre;
+    si->jb_max = pjsua_var.media_cfg.jb_max;
+    
+    /* Set SSRC */
+    si->ssrc = call->ssrc;
+    
+    /* Set RTP timestamp & sequence, normally these value are intialized
+     * automatically when stream session created, but for some cases (e.g:
+     * call reinvite, call update) timestamp and sequence need to be kept
+     * contigue.
+     */
+    si->rtp_ts = call->rtp_tx_ts;
+    si->rtp_seq = call->rtp_tx_seq;
+    si->rtp_seq_ts_set = call->rtp_tx_seq_ts_set;
+    
+    #if defined(PJMEDIA_STREAM_ENABLE_KA) && PJMEDIA_STREAM_ENABLE_KA!=0
+    /* Enable/disable stream keep-alive and NAT hole punch. */
+    si->use_ka = pjsua_var.acc[call->acc_id].cfg.use_stream_ka;
+    #endif
+    
+    /* Create session based on session info. */
+    status = pjmedia_session_create( pjsua_var.med_endpt, sess_info,
+				     &call->med_tp,
+				     call, &call->session );
+    if (status != PJ_SUCCESS) {
+	return status;
+    }
+    
+    if (prev_media_st == PJSUA_CALL_MEDIA_NONE)
+	pjmedia_session_send_rtcp_sdes(call->session);
+    
+    /* If DTMF callback is installed by application, install our
+     * callback to the session.
+     */
+    if (pjsua_var.ua_cfg.cb.on_dtmf_digit) {
+	pjmedia_session_set_dtmf_callback(call->session, 0, 
+					  &dtmf_callback, 
+					  (void*)(long)(call->index));
+    }
+    
+    /* Get the port interface of the first stream in the session.
+     * We need the port interface to add to the conference bridge.
+     */
+    pjmedia_session_get_port(call->session, 0, &media_port);
+    
+    /* Notify application about stream creation.
+     * Note: application may modify media_port to point to different
+     * media port
+     */
+    if (pjsua_var.ua_cfg.cb.on_stream_created) {
+	pjsua_var.ua_cfg.cb.on_stream_created(call_id, call->session,
+					      0, &media_port);
+    }
+    
+    /*
+     * Add the call to conference bridge.
+     */
+    {
+	char tmp[PJSIP_MAX_URL_SIZE];
+	pj_str_t port_name;
+    
+	port_name.ptr = tmp;
+	port_name.slen = pjsip_uri_print(PJSIP_URI_IN_REQ_URI,
+					 call->inv->dlg->remote.info->uri,
+					 tmp, sizeof(tmp));
+	if (port_name.slen < 1) {
+	    port_name = pj_str("call");
+	}
+	status = pjmedia_conf_add_port( pjsua_var.mconf, 
+					call->inv->pool,
+					media_port, 
+					&port_name,
+					(unsigned*)&call->conf_slot);
+	if (status != PJ_SUCCESS) {
+	    return status;
+	}
+    }
+    
+    return PJ_SUCCESS;
+}
+
+
+/* Internal function: update media channel after SDP negotiation.
+ * Warning: do not use temporary/flip-flop pool, e.g: inv->pool_prov,
+ *          for creating stream, etc, as after SDP negotiation and when
+ *	    the SDP media is not changed, the stream should remain running
+ *          while the temporary/flip-flop pool may be released.
+ */
 pj_status_t pjsua_media_channel_update(pjsua_call_id call_id,
 				       const pjmedia_sdp_session *local_sdp,
 				       const pjmedia_sdp_session *remote_sdp)
 {
     unsigned i;
-    int prev_media_st = 0;
+    int prev_media_st;
     pjsua_call *call = &pjsua_var.calls[call_id];
     pjmedia_session_info sess_info;
     pjmedia_stream_info *si = NULL;
-    pjmedia_port *media_port;
     pj_status_t status;
+    pj_bool_t media_changed = PJ_FALSE;
+    int audio_idx;
 
     if (!pjsua_var.med_endpt) {
 	/* We're being shutdown */
 	return PJ_EBUSY;
     }
 
-    /* Destroy existing media session, if any. */
-    prev_media_st = call->media_st;
-    stop_media_session(call->index);
-
-    /* Create media session info based on SDP parameters. 
-     */    
-    status = pjmedia_session_info_from_sdp( call->inv->pool_prov, 
-					    pjsua_var.med_endpt, 
+    /* Create media session info based on SDP parameters. */
+    status = pjmedia_session_info_from_sdp( call->inv->pool_prov,
+					    pjsua_var.med_endpt,
 					    PJMEDIA_MAX_SDP_MEDIA, &sess_info,
 					    local_sdp, remote_sdp);
     if (status != PJ_SUCCESS)
 	return status;
 
-    for (i = 0; i < sess_info.stream_cnt; ++i) {
-        sess_info.stream_info[i].rtcp_sdes_bye_disabled = PJ_TRUE;
-    }
+    /* Get audio index from the negotiated SDP */
+    audio_idx = find_audio_index(local_sdp, PJ_TRUE);
 
     /* Update audio index from the negotiated SDP */
-    call->audio_idx = find_audio_index(local_sdp, PJ_TRUE);
+    call->audio_idx = audio_idx;
 
     /* Find which session is audio */
     PJ_ASSERT_RETURN(call->audio_idx != -1, PJ_EBUG);
     PJ_ASSERT_RETURN(call->audio_idx < (int)sess_info.stream_cnt, PJ_EBUG);
     si = &sess_info.stream_info[call->audio_idx];
+
+    /* Override ptime, if this option is specified. */
+    if (pjsua_var.media_cfg.ptime != 0) {
+	si->param->setting.frm_per_pkt = (pj_uint8_t)
+	    (pjsua_var.media_cfg.ptime / si->param->info.frm_ptime);
+	if (si->param->setting.frm_per_pkt == 0)
+            si->param->setting.frm_per_pkt = 1;
+    }
+
+    /* Disable VAD, if this option is specified. */
+    if (pjsua_var.media_cfg.no_vad) {
+        si->param->setting.vad = 0;
+    }
+
+    /* Get previous media status */
+    prev_media_st = call->media_st;
     
+    /* Check if media has just been changed. */
+    if (pjsua_var.media_cfg.no_smart_media_update ||
+	is_media_changed(call, audio_idx, &sess_info))
+    {
+	media_changed = PJ_TRUE;
+
+	/* Destroy existing media session, if any. */
+	stop_media_session(call->index);
+    } else {
+	PJ_LOG(4,(THIS_FILE, "Media session for call %d is unchanged",
+			     call_id));
+    }
+
+
+    for (i = 0; i < sess_info.stream_cnt; ++i) {
+        sess_info.stream_info[i].rtcp_sdes_bye_disabled = PJ_TRUE;
+    }
+
     /* Reset session info with only one media stream */
     sess_info.stream_cnt = 1;
     if (si != &sess_info.stream_info[0]) {
@@ -1691,6 +1937,7 @@ pj_status_t pjsua_media_channel_update(pjsua_call_id call_id,
 
     } else {
 	pjmedia_transport_info tp_info;
+	pjmedia_srtp_info *srtp_info;
 
 	/* Start/restart media transport */
 	status = pjmedia_transport_media_start(call->med_tp, 
@@ -1705,115 +1952,18 @@ pj_status_t pjsua_media_channel_update(pjsua_call_id call_id,
 	/* Get remote SRTP usage policy */
 	pjmedia_transport_info_init(&tp_info);
 	pjmedia_transport_get_info(call->med_tp, &tp_info);
-	if (tp_info.specific_info_cnt > 0) {
-	    unsigned i;
-	    for (i = 0; i < tp_info.specific_info_cnt; ++i) {
-		if (tp_info.spc_info[i].type == PJMEDIA_TRANSPORT_TYPE_SRTP) 
-		{
-		    pjmedia_srtp_info *srtp_info = 
-				(pjmedia_srtp_info*) tp_info.spc_info[i].buffer;
-
-		    call->rem_srtp_use = srtp_info->peer_use;
-		    break;
-		}
-	    }
+	srtp_info = (pjmedia_srtp_info*)
+		    pjmedia_transport_info_get_spc_info(
+			    &tp_info, PJMEDIA_TRANSPORT_TYPE_SRTP);
+	if (srtp_info) {
+	    call->rem_srtp_use = srtp_info->peer_use;
 	}
 
-	/* Override ptime, if this option is specified. */
-	if (pjsua_var.media_cfg.ptime != 0) {
-	    si->param->setting.frm_per_pkt = (pj_uint8_t)
-		(pjsua_var.media_cfg.ptime / si->param->info.frm_ptime);
-	    if (si->param->setting.frm_per_pkt == 0)
-		si->param->setting.frm_per_pkt = 1;
-	}
-
-	/* Disable VAD, if this option is specified. */
-	if (pjsua_var.media_cfg.no_vad) {
-	    si->param->setting.vad = 0;
-	}
-
-
-	/* Optionally, application may modify other stream settings here
-	 * (such as jitter buffer parameters, codec ptime, etc.)
-	 */
-	si->jb_init = pjsua_var.media_cfg.jb_init;
-	si->jb_min_pre = pjsua_var.media_cfg.jb_min_pre;
-	si->jb_max_pre = pjsua_var.media_cfg.jb_max_pre;
-	si->jb_max = pjsua_var.media_cfg.jb_max;
-
-	/* Set SSRC */
-	si->ssrc = call->ssrc;
-
-	/* Set RTP timestamp & sequence, normally these value are intialized
-	 * automatically when stream session created, but for some cases (e.g:
-	 * call reinvite, call update) timestamp and sequence need to be kept
-	 * contigue.
-	 */
-	si->rtp_ts = call->rtp_tx_ts;
-	si->rtp_seq = call->rtp_tx_seq;
-	si->rtp_seq_ts_set = call->rtp_tx_seq_ts_set;
-
-#if defined(PJMEDIA_STREAM_ENABLE_KA) && PJMEDIA_STREAM_ENABLE_KA!=0
-	/* Enable/disable stream keep-alive and NAT hole punch. */
-	si->use_ka = pjsua_var.acc[call->acc_id].cfg.use_stream_ka;
-#endif
-
-	/* Create session based on session info. */
-	status = pjmedia_session_create( pjsua_var.med_endpt, &sess_info,
-					 &call->med_tp,
-					 call, &call->session );
-	if (status != PJ_SUCCESS) {
-	    return status;
-	}
-
-        if (prev_media_st == PJSUA_CALL_MEDIA_NONE)
-            pjmedia_session_send_rtcp_sdes(call->session);
-
-	/* If DTMF callback is installed by application, install our
-	 * callback to the session.
-	 */
-	if (pjsua_var.ua_cfg.cb.on_dtmf_digit) {
-	    pjmedia_session_set_dtmf_callback(call->session, 0, 
-					      &dtmf_callback, 
-					      (void*)(long)(call->index));
-	}
-
-	/* Get the port interface of the first stream in the session.
-	 * We need the port interface to add to the conference bridge.
-	 */
-	pjmedia_session_get_port(call->session, 0, &media_port);
-
-	/* Notify application about stream creation.
-	 * Note: application may modify media_port to point to different
-	 * media port
-	 */
-	if (pjsua_var.ua_cfg.cb.on_stream_created) {
-	    pjsua_var.ua_cfg.cb.on_stream_created(call_id, call->session,
-						  0, &media_port);
-	}
-
-	/*
-	 * Add the call to conference bridge.
-	 */
-	{
-	    char tmp[PJSIP_MAX_URL_SIZE];
-	    pj_str_t port_name;
-
-	    port_name.ptr = tmp;
-	    port_name.slen = pjsip_uri_print(PJSIP_URI_IN_REQ_URI,
-					     call->inv->dlg->remote.info->uri,
-					     tmp, sizeof(tmp));
-	    if (port_name.slen < 1) {
-		port_name = pj_str("call");
-	    }
-	    status = pjmedia_conf_add_port( pjsua_var.mconf, 
-					    call->inv->pool_prov,
-					    media_port, 
-					    &port_name,
-					    (unsigned*)&call->conf_slot);
-	    if (status != PJ_SUCCESS) {
+	if (media_changed) {
+	    status = audio_channel_update(call_id, prev_media_st, &sess_info,
+					  local_sdp, remote_sdp);
+	    if (status != PJ_SUCCESS)
 		return status;
-	    }
 	}
 
 	/* Call media direction */

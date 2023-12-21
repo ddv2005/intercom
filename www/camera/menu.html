@@ -1,12 +1,11 @@
     <div id="sidebar">
       <h1>Intercom Camera Pages</h1>
       <div id="menu">	
-        <a href="/">Main Page</a>
+        <a href="/">Home</a>
         <a <!--# if expr="$REQUEST_URI = /index.html/" --> class="active" <!--# endif -->  href="index.html">Home</a>
         <a <!--# if expr="$REQUEST_URI = /static.html/" --> class="active" <!--# endif --> href="static.html">Static</a>
         <a <!--# if expr="$REQUEST_URI = /stream.html/" --> class="active" <!--# endif --> href="stream.html">Stream</a>
         <a <!--# if expr="$REQUEST_URI = /javascript.html/" --> class="active" <!--# endif -->href="javascript.html">Javascript</a>
-        <a onClick="window.open(this.href, 'controlWindow','status = 1, height = 700, width = 500, resizable = 1'); return false;" href="control.htm">Control</a>
       </div>
       <!--# if expr="$REQUEST_URI = /javascript.html/" -->
       <h3>Runtime info:</h3>

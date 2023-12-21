@@ -1,4 +1,4 @@
-/* $Id: codec.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: codec.h 4329 2013-01-23 02:57:30Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -308,6 +308,18 @@ typedef struct pjmedia_codec_param
     } setting;
 } pjmedia_codec_param;
 
+
+/**
+ * Duplicate codec parameter.
+ *
+ * @param pool	    The pool.
+ * @param src	    The codec parameter to be duplicated.
+ *
+ * @return	    Duplicated codec parameter.
+ */
+PJ_DECL(pjmedia_codec_param*) pjmedia_codec_param_clone(
+					pj_pool_t *pool,
+					const pjmedia_codec_param *src);
 
 
 /*

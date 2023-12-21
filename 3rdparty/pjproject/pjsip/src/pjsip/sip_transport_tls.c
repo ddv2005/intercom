@@ -1,4 +1,4 @@
-/* $Id: sip_transport_tls.c 3942 2012-01-16 05:05:47Z nanang $ */
+/* $Id: sip_transport_tls.c 4394 2013-02-27 12:02:42Z ming $ */
 /* 
  * Copyright (C) 2009-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -71,6 +71,7 @@ struct delayed_tdata
 {
     PJ_DECL_LIST_MEMBER(struct delayed_tdata);
     pjsip_tx_data_op_key    *tdata_op_key;
+    pj_time_val              timeout;
 };
 
 
@@ -194,9 +195,21 @@ static void tls_init_shutdown(struct tls_transport *tls, pj_status_t status)
     state_cb = pjsip_tpmgr_get_state_cb(tls->base.tpmgr);
     if (state_cb) {
 	pjsip_transport_state_info state_info;
-
+	pjsip_tls_state_info tls_info;
+	pj_ssl_sock_info ssl_info;
+	
+	/* Init transport state info */
 	pj_bzero(&state_info, sizeof(state_info));
 	state_info.status = tls->close_reason;
+
+	if (tls->ssock && 
+	    pj_ssl_sock_get_info(tls->ssock, &ssl_info) == PJ_SUCCESS)
+	{
+	    pj_bzero(&tls_info, sizeof(tls_info));
+	    tls_info.ssl_sock_info = &ssl_info;
+	    state_info.ext_info = &tls_info;
+	}
+
 	(*state_cb)(&tls->base, PJSIP_TP_STATE_DISCONNECTED, &state_info);
     }
 
@@ -635,6 +648,9 @@ on_error:
 /* Flush all delayed transmision once the socket is connected. */
 static void tls_flush_pending_tx(struct tls_transport *tls)
 {
+    pj_time_val now;
+
+    pj_gettickcount(&now);
     pj_lock_acquire(tls->base.lock);
     while (!pj_list_empty(&tls->delayed_list)) {
 	struct delayed_tdata *pending_tx;
@@ -649,13 +665,21 @@ static void tls_flush_pending_tx(struct tls_transport *tls)
 	tdata = pending_tx->tdata_op_key->tdata;
 	op_key = (pj_ioqueue_op_key_t*)pending_tx->tdata_op_key;
 
+        if (pending_tx->timeout.sec > 0 &&
+            PJ_TIME_VAL_GT(now, pending_tx->timeout))
+        {
+            continue;
+        }
+
 	/* send! */
 	size = tdata->buf.cur - tdata->buf.start;
 	status = pj_ssl_sock_send(tls->ssock, op_key, tdata->buf.start, 
 				  &size, 0);
 
 	if (status != PJ_EPENDING) {
+            pj_lock_release(tls->base.lock);
 	    on_data_sent(tls->ssock, op_key, size);
+            pj_lock_acquire(tls->base.lock);
 	}
     }
     pj_lock_release(tls->base.lock);
@@ -1205,10 +1229,19 @@ static pj_status_t tls_send_msg(pjsip_transport *transport,
 	    /*
 	     * connect() is still in progress. Put the transmit data to
 	     * the delayed list.
+             * Starting from #1583 (https://trac.pjsip.org/repos/ticket/1583),
+             * we also add timeout value for the transmit data. When the
+             * connect() is completed, the timeout value will be checked to
+             * determine whether the transmit data needs to be sent.
 	     */
-	    delayed_tdata = PJ_POOL_ALLOC_T(tdata->pool, 
-					    struct delayed_tdata);
+	    delayed_tdata = PJ_POOL_ZALLOC_T(tdata->pool, 
+					     struct delayed_tdata);
 	    delayed_tdata->tdata_op_key = &tdata->op_key;
+            if (tdata->msg && tdata->msg->type == PJSIP_REQUEST_MSG) {
+                pj_gettickcount(&delayed_tdata->timeout);
+                delayed_tdata->timeout.msec += pjsip_cfg()->tsx.td;
+                pj_time_val_normalize(&delayed_tdata->timeout);
+            }
 
 	    pj_list_push_back(&tls->delayed_list, delayed_tdata);
 	    status = PJ_EPENDING;

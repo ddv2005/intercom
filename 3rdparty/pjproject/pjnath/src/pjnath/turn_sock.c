@@ -1,4 +1,4 @@
-/* $Id: turn_sock.c 3596 2011-06-22 10:57:11Z bennylp $ */
+/* $Id: turn_sock.c 4386 2013-02-27 10:14:23Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -210,6 +210,7 @@ static void destroy(pj_turn_sock *turn_sock)
     }
 
     if (turn_sock->active_sock) {
+        pj_activesock_set_user_data(turn_sock->active_sock, NULL);
 	pj_activesock_close(turn_sock->active_sock);
 	turn_sock->active_sock = NULL;
     }
@@ -462,6 +463,16 @@ static pj_bool_t on_connect_complete(pj_activesock_t *asock,
     pj_turn_sock *turn_sock;
 
     turn_sock = (pj_turn_sock*) pj_activesock_get_user_data(asock);
+    if (!turn_sock)
+        return PJ_FALSE;
+
+    /* TURN session may have already been destroyed here.
+     * See ticket #1557 (http://trac.pjsip.org/repos/ticket/1557).
+     */
+    if (!turn_sock->sess) {
+	sess_fail(turn_sock, "TURN session already destroyed", status);
+	return PJ_FALSE;
+    }
 
     if (status != PJ_SUCCESS) {
 	sess_fail(turn_sock, "TCP connect() error", status);

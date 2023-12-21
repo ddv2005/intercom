@@ -1,4 +1,4 @@
-/* $Id: os_core_win32.c 3986 2012-03-22 11:29:20Z nanang $ */
+/* $Id: os_core_win32.c 4410 2013-03-01 03:46:45Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -578,6 +578,9 @@ PJ_DEF(pj_status_t) pj_thread_join(pj_thread_t *p)
 
     PJ_CHECK_STACK();
     PJ_ASSERT_RETURN(p, PJ_EINVAL);
+
+    if (p == pj_thread_this())
+	return PJ_ECANCELLED;
 
     PJ_LOG(6, (pj_thread_this()->obj_name, "Joining thread %s", p->obj_name));
 

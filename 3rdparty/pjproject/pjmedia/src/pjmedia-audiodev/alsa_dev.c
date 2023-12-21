@@ -1,4 +1,4 @@
-/* $Id: alsa_dev.c 4125 2012-05-17 03:34:35Z nanang $ */
+/* $Id: alsa_dev.c 4387 2013-02-27 10:16:08Z ming $ */
 /*
  * Copyright (C) 2009-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2007-2009 Keystream AB and Konftel AB, All rights reserved.
@@ -239,7 +239,7 @@ static pj_status_t add_dev (struct alsa_factory *af, const char *dev_name)
     pj_bzero(adi, sizeof(*adi));
 
     /* Set device name */
-    strcpy(adi->name, dev_name);
+    strncpy(adi->name, dev_name, sizeof(adi->name));
 
     /* Check the number of playback channels */
     adi->output_count = 1;

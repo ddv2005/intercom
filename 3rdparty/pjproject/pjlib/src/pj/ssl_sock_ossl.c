@@ -1,4 +1,4 @@
-/* $Id: ssl_sock_ossl.c 3942 2012-01-16 05:05:47Z nanang $ */
+/* $Id: ssl_sock_ossl.c 4405 2013-02-27 14:51:34Z riza $ */
 /* 
  * Copyright (C) 2009-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -105,9 +105,10 @@ typedef struct read_data_t
 					ssock->param.read_buffer_size)
 
 /*
- * Structure of SSL socket write buffer.
+ * Structure of SSL socket write data.
  */
 typedef struct write_data_t {
+    PJ_DECL_LIST_MEMBER(struct write_data_t);
     pj_ioqueue_op_key_t	 key;
     pj_size_t 	 	 record_len;
     pj_ioqueue_op_key_t	*app_key;
@@ -121,23 +122,14 @@ typedef struct write_data_t {
 } write_data_t;
 
 /*
- * Structure of SSL socket write state.
+ * Structure of SSL socket write buffer (circular buffer).
  */
-typedef struct write_state_t {
+typedef struct send_buf_t {
     char		*buf;
     pj_size_t		 max_len;    
     char		*start;
     pj_size_t		 len;
-    write_data_t	*last_data;
-} write_state_t;
-
-/*
- * Structure of write data pending.
- */
-typedef struct write_pending_t {
-    PJ_DECL_LIST_MEMBER(struct write_pending_t);
-    write_data_t	 data;
-} write_pending_t;
+} send_buf_t;
 
 /*
  * Secure socket structure definition.
@@ -158,6 +150,8 @@ struct pj_ssl_sock_t
     pj_timer_entry	  timer;
     pj_status_t		  verify_status;
 
+    unsigned long	  last_err;
+
     pj_sock_t		  sock;
     pj_activesock_t	 *asock;
 
@@ -171,10 +165,12 @@ struct pj_ssl_sock_t
     void		**asock_rbuf;
     read_data_t		 *ssock_rbuf;
 
-    write_state_t	  write_state;
-    write_pending_t	  write_pending;
-    write_pending_t	  write_pending_empty;
-    pj_lock_t		 *write_mutex; /* protect write BIO and write_state */
+    write_data_t	  write_pending;/* list of pending write to OpenSSL */
+    write_data_t	  write_pending_empty; /* cache for write_pending   */
+    pj_bool_t		  flushing_write_pend; /* flag of flushing is ongoing*/
+    send_buf_t		  send_buf;
+    write_data_t	  send_pending;	/* list of pending write to network */
+    pj_lock_t		 *write_mutex;	/* protect write BIO and send_buf   */
 
     SSL_CTX		 *ossl_ctx;
     SSL			 *ossl_ssl;
@@ -195,6 +191,8 @@ struct pj_ssl_cert_t
 };
 
 
+static write_data_t* alloc_send_data(pj_ssl_sock_t *ssock, pj_size_t len);
+static void free_send_data(pj_ssl_sock_t *ssock, write_data_t *wdata);
 static pj_status_t flush_delayed_send(pj_ssl_sock_t *ssock);
 
 /*
@@ -212,16 +210,37 @@ static pj_status_t flush_delayed_send(pj_ssl_sock_t *ssock);
 
 #define PJ_SSL_ERRNO_SPACE_SIZE		PJ_ERRNO_SPACE_SIZE
 
-#define STATUS_FROM_SSL_ERR(err, status) { \
-    status = ERR_GET_LIB(err)*300 + ERR_GET_REASON(err);\
-    pj_assert(status < PJ_SSL_ERRNO_SPACE_SIZE);\
-    if (status) status += PJ_SSL_ERRNO_START;\
+/* Expected maximum value of reason component in OpenSSL error code */
+#define MAX_OSSL_ERR_REASON		1200
+
+static pj_status_t STATUS_FROM_SSL_ERR(pj_ssl_sock_t *ssock,
+				       unsigned long err)
+{
+    pj_status_t status;
+
+    /* General SSL error, dig more from OpenSSL error queue */
+    if (err == SSL_ERROR_SSL)
+	err = ERR_get_error();
+
+    /* OpenSSL error range is much wider than PJLIB errno space, so
+     * if it exceeds the space, only the error reason will be kept.
+     * Note that the last native error will be kept as is and can be
+     * retrieved via SSL socket info.
+     */
+    status = ERR_GET_LIB(err)*MAX_OSSL_ERR_REASON + ERR_GET_REASON(err);
+    if (status > PJ_SSL_ERRNO_SPACE_SIZE)
+	status = ERR_GET_REASON(err);
+
+    status += PJ_SSL_ERRNO_START;
+    ssock->last_err = err;
+    return status;
 }
 
-#define GET_SSL_STATUS(status) { \
-    unsigned long e = ERR_get_error();\
-    STATUS_FROM_SSL_ERR(e, status);\
+static pj_status_t GET_SSL_STATUS(pj_ssl_sock_t *ssock)
+{
+    return STATUS_FROM_SSL_ERR(ssock, ERR_get_error());
 }
+
 
 /*
  * Get error string of OpenSSL.
@@ -235,8 +254,8 @@ static pj_str_t ssl_strerror(pj_status_t status,
     if (ssl_err) {
 	unsigned long l, r;
 	ssl_err -= PJ_SSL_ERRNO_START;
-	l = ssl_err/300;
-	r = ssl_err%300;
+	l = ssl_err / MAX_OSSL_ERR_REASON;
+	r = ssl_err % MAX_OSSL_ERR_REASON;
 	ssl_err = ERR_PACK(l, 0, r);
     }
 
@@ -244,12 +263,7 @@ static pj_str_t ssl_strerror(pj_status_t status,
 
     {
 	const char *tmp = NULL;
-
-	if (ssl_err >= 300)
-	    tmp = ERR_reason_error_string(ssl_err);
-	else
-	    tmp = X509_verify_cert_error_string(ssl_err);
-
+	tmp = ERR_reason_error_string(ssl_err);
 	if (tmp) {
 	    pj_ansi_strncpy(buf, tmp, bufsize);
 	    errstr = pj_str(buf);
@@ -517,8 +531,7 @@ static pj_status_t create_ssl(pj_ssl_sock_t *ssock)
     /* Create SSL context */
     ctx = SSL_CTX_new(ssl_method);
     if (ctx == NULL) {
-	GET_SSL_STATUS(status);
-	return status;
+	return GET_SSL_STATUS(ssock);
     }
 
     /* Apply credentials */
@@ -529,7 +542,7 @@ static pj_status_t create_ssl(pj_ssl_sock_t *ssock)
 	    rc = SSL_CTX_load_verify_locations(ctx, cert->CA_file.ptr, NULL);
 
 	    if (rc != 1) {
-		GET_SSL_STATUS(status);
+		status = GET_SSL_STATUS(ssock);
 		PJ_LOG(1,(ssock->pool->obj_name, "Error loading CA list file "
 			  "'%s'", cert->CA_file.ptr));
 		SSL_CTX_free(ctx);
@@ -551,7 +564,7 @@ static pj_status_t create_ssl(pj_ssl_sock_t *ssock)
 	    rc = SSL_CTX_use_certificate_chain_file(ctx, cert->cert_file.ptr);
 
 	    if(rc != 1) {
-		GET_SSL_STATUS(status);
+		status = GET_SSL_STATUS(ssock);
 		PJ_LOG(1,(ssock->pool->obj_name, "Error loading certificate "
 			  "chain file '%s'", cert->cert_file.ptr));
 		SSL_CTX_free(ctx);
@@ -567,7 +580,7 @@ static pj_status_t create_ssl(pj_ssl_sock_t *ssock)
 					     SSL_FILETYPE_PEM);
 
 	    if(rc != 1) {
-		GET_SSL_STATUS(status);
+		status = GET_SSL_STATUS(ssock);
 		PJ_LOG(1,(ssock->pool->obj_name, "Error adding private key "
 			  "from '%s'", cert->privkey_file.ptr));
 		SSL_CTX_free(ctx);
@@ -580,8 +593,7 @@ static pj_status_t create_ssl(pj_ssl_sock_t *ssock)
     ssock->ossl_ctx = ctx;
     ssock->ossl_ssl = SSL_new(ssock->ossl_ctx);
     if (ssock->ossl_ssl == NULL) {
-	GET_SSL_STATUS(status);
-	return status;
+	return GET_SSL_STATUS(ssock);
     }
 
     /* Set SSL sock as application data of SSL instance */
@@ -713,9 +725,7 @@ static pj_status_t set_cipher_list(pj_ssl_sock_t *ssock)
     /* Finally, set chosen cipher list */
     ret = SSL_set_cipher_list(ssock->ossl_ssl, buf);
     if (ret < 1) {
-	pj_status_t status;
-	GET_SSL_STATUS(status);
-	return status;
+	return GET_SSL_STATUS(ssock);
     }
 
     return PJ_SUCCESS;
@@ -1020,6 +1030,13 @@ static pj_bool_t on_handshake_complete(pj_ssl_sock_t *ssock,
 	 * reconnect in the callback.
 	 */
 	if (status != PJ_SUCCESS) {
+	    /* Server disconnected us, possibly due to SSL nego failure */
+	    if (status == PJ_EEOF) {
+		unsigned long err;
+		err = ERR_get_error();
+		if (err != SSL_ERROR_NONE)
+		    status = STATUS_FROM_SSL_ERR(ssock, err);
+	    }
 	    reset_ssl_sock_state(ssock);
 	}
 	if (ssock->param.cb.on_connect_complete) {
@@ -1032,6 +1049,179 @@ static pj_bool_t on_handshake_complete(pj_ssl_sock_t *ssock,
 
     return PJ_TRUE;
 }
+
+static write_data_t* alloc_send_data(pj_ssl_sock_t *ssock, pj_size_t len)
+{
+    send_buf_t *send_buf = &ssock->send_buf;
+    pj_size_t avail_len, skipped_len = 0;
+    char *reg1, *reg2;
+    pj_size_t reg1_len, reg2_len;
+    write_data_t *p;
+
+    /* Check buffer availability */
+    avail_len = send_buf->max_len - send_buf->len;
+    if (avail_len < len)
+	return NULL;
+
+    /* If buffer empty, reset start pointer and return it */
+    if (send_buf->len == 0) {
+	send_buf->start = send_buf->buf;
+	send_buf->len   = len;
+	p = (write_data_t*)send_buf->start;
+	goto init_send_data;
+    }
+
+    /* Free space may be wrapped/splitted into two regions, so let's
+     * analyze them if any region can hold the write data.
+     */
+    reg1 = send_buf->start + send_buf->len;
+    if (reg1 >= send_buf->buf + send_buf->max_len)
+	reg1 -= send_buf->max_len;
+    reg1_len = send_buf->max_len - send_buf->len;
+    if (reg1 + reg1_len > send_buf->buf + send_buf->max_len) {
+	reg1_len = send_buf->buf + send_buf->max_len - reg1;
+	reg2 = send_buf->buf;
+	reg2_len = send_buf->start - send_buf->buf;
+    } else {
+	reg2 = NULL;
+	reg2_len = 0;
+    }
+
+    /* More buffer availability check, note that the write data must be in
+     * a contigue buffer.
+     */
+    avail_len = PJ_MAX(reg1_len, reg2_len);
+    if (avail_len < len)
+	return NULL;
+
+    /* Get the data slot */
+    if (reg1_len >= len) {
+	p = (write_data_t*)reg1;
+    } else {
+	p = (write_data_t*)reg2;
+	skipped_len = reg1_len;
+    }
+
+    /* Update buffer length */
+    send_buf->len += len + skipped_len;
+
+init_send_data:
+    /* Init the new send data */
+    pj_bzero(p, sizeof(*p));
+    pj_list_init(p);
+    pj_list_push_back(&ssock->send_pending, p);
+
+    return p;
+}
+
+static void free_send_data(pj_ssl_sock_t *ssock, write_data_t *wdata)
+{
+    send_buf_t *buf = &ssock->send_buf;
+    write_data_t *spl = &ssock->send_pending;
+
+    pj_assert(!pj_list_empty(&ssock->send_pending));
+    
+    /* Free slot from the buffer */
+    if (spl->next == wdata && spl->prev == wdata) {
+	/* This is the only data, reset the buffer */
+	buf->start = buf->buf;
+	buf->len = 0;
+    } else if (spl->next == wdata) {
+	/* This is the first data, shift start pointer of the buffer and
+	 * adjust the buffer length.
+	 */
+	buf->start = (char*)wdata->next;
+	if (wdata->next > wdata) {
+	    buf->len -= ((char*)wdata->next - buf->start);
+	} else {
+	    /* Overlapped */
+	    unsigned right_len, left_len;
+	    right_len = buf->buf + buf->max_len - (char*)wdata;
+	    left_len  = (char*)wdata->next - buf->buf;
+	    buf->len -= (right_len + left_len);
+	}
+    } else if (spl->prev == wdata) {
+	/* This is the last data, just adjust the buffer length */
+	if (wdata->prev < wdata) {
+	    unsigned jump_len;
+	    jump_len = (char*)wdata -
+		       ((char*)wdata->prev + wdata->prev->record_len);
+	    buf->len -= (wdata->record_len + jump_len);
+	} else {
+	    /* Overlapped */
+	    unsigned right_len, left_len;
+	    right_len = buf->buf + buf->max_len -
+			((char*)wdata->prev + wdata->prev->record_len);
+	    left_len  = (char*)wdata + wdata->record_len - buf->buf;
+	    buf->len -= (right_len + left_len);
+	}
+    }
+    /* For data in the middle buffer, just do nothing on the buffer. The slot
+     * will be freed later when freeing the first/last data.
+     */
+    
+    /* Remove the data from send pending list */
+    pj_list_erase(wdata);
+}
+
+#if 0
+/* Just for testing send buffer alloc/free */
+#include <pj/rand.h>
+pj_status_t pj_ssl_sock_ossl_test_send_buf(pj_pool_t *pool)
+{
+    enum { MAX_CHUNK_NUM = 20 };
+    unsigned chunk_size, chunk_cnt, i;
+    write_data_t *wdata[MAX_CHUNK_NUM] = {0};
+    pj_time_val now;
+    pj_ssl_sock_t *ssock = NULL;
+    pj_ssl_sock_param param;
+    pj_status_t status;
+
+    pj_gettimeofday(&now);
+    pj_srand((unsigned)now.sec);
+
+    pj_ssl_sock_param_default(&param);
+    status = pj_ssl_sock_create(pool, &param, &ssock);
+    if (status != PJ_SUCCESS) {
+	return status;
+    }
+
+    if (ssock->send_buf.max_len == 0) {
+	ssock->send_buf.buf = (char*)
+			      pj_pool_alloc(ssock->pool, 
+					    ssock->param.send_buffer_size);
+	ssock->send_buf.max_len = ssock->param.send_buffer_size;
+	ssock->send_buf.start = ssock->send_buf.buf;
+	ssock->send_buf.len = 0;
+    }
+
+    chunk_size = ssock->param.send_buffer_size / MAX_CHUNK_NUM / 2;
+    chunk_cnt = 0;
+    for (i = 0; i < MAX_CHUNK_NUM; i++) {
+	wdata[i] = alloc_send_data(ssock, pj_rand() % chunk_size + 321);
+	if (wdata[i])
+	    chunk_cnt++;
+	else
+	    break;
+    }
+
+    while (chunk_cnt) {
+	i = pj_rand() % MAX_CHUNK_NUM;
+	if (wdata[i]) {
+	    free_send_data(ssock, wdata[i]);
+	    wdata[i] = NULL;
+	    chunk_cnt--;
+	}
+    }
+
+    if (ssock->send_buf.len != 0)
+	status = PJ_EBUG;
+
+    pj_ssl_sock_close(ssock);
+    return status;
+}
+#endif
+
 
 /* Flush write BIO to network socket. Note that any access to write BIO
  * MUST be serialized, so mutex protection must cover any call to OpenSSL
@@ -1046,82 +1236,51 @@ static pj_status_t flush_write_bio(pj_ssl_sock_t *ssock,
 {
     char *data;
     pj_ssize_t len;
-
-    write_state_t *write_st = &ssock->write_state;
     write_data_t *wdata;
-    pj_size_t avail_len, needed_len, skipped_len = 0;
+    pj_size_t needed_len;
     pj_status_t status;
 
+    pj_lock_acquire(ssock->write_mutex);
+
     /* Check if there is data in write BIO, flush it if any */
-    if (!BIO_pending(ssock->ossl_wbio))
+    if (!BIO_pending(ssock->ossl_wbio)) {
+	pj_lock_release(ssock->write_mutex);
 	return PJ_SUCCESS;
+    }
 
     /* Get data and its length */
     len = BIO_get_mem_data(ssock->ossl_wbio, &data);
-    if (len == 0)
+    if (len == 0) {
+	pj_lock_release(ssock->write_mutex);
 	return PJ_SUCCESS;
+    }
 
     /* Calculate buffer size needed, and align it to 8 */
     needed_len = len + sizeof(write_data_t);
     needed_len = ((needed_len + 7) >> 3) << 3;
 
-    /* Check buffer availability */
-    avail_len = write_st->max_len - write_st->len;
-    if (avail_len < needed_len)
+    /* Allocate buffer for send data */
+    wdata = alloc_send_data(ssock, needed_len);
+    if (wdata == NULL) {
+	pj_lock_release(ssock->write_mutex);
 	return PJ_ENOMEM;
-
-    /* More buffer availability check, note that the write data must be in
-     * a contigue buffer.
-     */
-    if (write_st->len == 0) {
-
-	write_st->start = write_st->buf;
-	wdata = (write_data_t*)write_st->start;
-
-    } else {
-
-	char *reg1, *reg2;
-	pj_size_t reg1_len, reg2_len;
-
-	/* Unused slots may be wrapped/splitted into two regions, so let's
-	 * analyze them if any region can hold the write data.
-	 */
-	reg1 = write_st->start + write_st->len;
-	if (reg1 >= write_st->buf + write_st->max_len)
-	    reg1 -= write_st->max_len;
-	reg1_len = write_st->max_len - write_st->len;
-	if (reg1 + reg1_len > write_st->buf + write_st->max_len) {
-	    reg1_len = write_st->buf + write_st->max_len - reg1;
-	    reg2 = write_st->buf;
-	    reg2_len = write_st->start - write_st->buf;
-	} else {
-	    reg2 = NULL;
-	    reg2_len = 0;
-	}
-	avail_len = PJ_MAX(reg1_len, reg2_len);
-	if (avail_len < needed_len)
-	    return PJ_ENOMEM;
-
-	/* Get write data pointer and update buffer length */
-	if (reg1_len >= needed_len) {
-	    wdata = (write_data_t*)reg1;
-	} else {
-	    wdata = (write_data_t*)reg2;
-	    /* Unused slot in region 1 is skipped as current write data
-	     * doesn't fit it.
-	     */
-	    skipped_len = reg1_len;
-	}
     }
 
-    /* Copy the data and set its properties into the buffer */
-    pj_bzero(wdata, sizeof(write_data_t));
+    /* Copy the data and set its properties into the send data */
+    pj_ioqueue_op_key_init(&wdata->key, sizeof(pj_ioqueue_op_key_t));
+    wdata->key.user_data = wdata;
     wdata->app_key = send_key;
     wdata->record_len = needed_len;
     wdata->data_len = len;
     wdata->plain_data_len = orig_len;
     wdata->flags = flags;
     pj_memcpy(&wdata->data, data, len);
+
+    /* Reset write BIO */
+    BIO_reset(ssock->ossl_wbio);
+
+    /* Ticket #1573: Don't hold mutex while calling PJLIB socket send(). */
+    pj_lock_release(ssock->write_mutex);
 
     /* Send it */
     if (ssock->param.sock_type == pj_SOCK_STREAM()) {
@@ -1136,24 +1295,13 @@ static pj_status_t flush_write_bio(pj_ssl_sock_t *ssock,
 				      ssock->addr_len);
     }
 
-    /* Oh no, EWOULDBLOCK! */
-    if (status == PJ_STATUS_FROM_OS(OSERR_EWOULDBLOCK)) {
-	/* Just return PJ_SUCCESS here, the pending data will be sent in next
-	 * call of this function since the data is still stored in write BIO.
+    if (status != PJ_EPENDING) {
+	/* When the sending is not pending, remove the wdata from send
+	 * pending list.
 	 */
-	return PJ_SUCCESS;
-    }
-
-    /* Reset write BIO after flushed */
-    BIO_reset(ssock->ossl_wbio);
-
-    if (status == PJ_EPENDING) {
-	/* Update write state */
-	pj_assert(skipped_len==0 || write_st->last_data);
-	write_st->len += needed_len + skipped_len;
-	if (write_st->last_data)
-	    write_st->last_data->record_len += skipped_len;
-	write_st->last_data = wdata;
+	pj_lock_acquire(ssock->write_mutex);
+	free_send_data(ssock, wdata);
+	pj_lock_release(ssock->write_mutex);
     }
 
     return status;
@@ -1192,31 +1340,28 @@ static pj_status_t do_handshake(pj_ssl_sock_t *ssock)
     pj_status_t status;
     int err;
 
-    pj_lock_acquire(ssock->write_mutex);
-
     /* Perform SSL handshake */
+    pj_lock_acquire(ssock->write_mutex);
     err = SSL_do_handshake(ssock->ossl_ssl);
-    if (err < 0) {
-	err = SSL_get_error(ssock->ossl_ssl, err);
-	if (err != SSL_ERROR_NONE && err != SSL_ERROR_WANT_READ) 
-	{
-	    /* Handshake fails */
-	    GET_SSL_STATUS(status);
-	    pj_lock_release(ssock->write_mutex);
-	    return status;
-	}
-    }
+    pj_lock_release(ssock->write_mutex);
 
     /* SSL_do_handshake() may put some pending data into SSL write BIO, 
      * flush it if any.
      */
     status = flush_write_bio(ssock, &ssock->handshake_op_key, 0, 0);
     if (status != PJ_SUCCESS && status != PJ_EPENDING) {
-	pj_lock_release(ssock->write_mutex);
 	return status;
     }
 
-    pj_lock_release(ssock->write_mutex);
+    if (err < 0) {
+	err = SSL_get_error(ssock->ossl_ssl, err);
+	if (err != SSL_ERROR_NONE && err != SSL_ERROR_WANT_READ) 
+	{
+	    /* Handshake fails */
+	    status = STATUS_FROM_SSL_ERR(ssock, err);
+	    return status;
+	}
+    }
 
     /* Check if handshake has been completed */
     if (SSL_is_init_finished(ssock->ossl_ssl)) {
@@ -1249,7 +1394,7 @@ static pj_bool_t asock_on_data_read (pj_activesock_t *asock,
 	/* Consume the whole data */
 	nwritten = BIO_write(ssock->ossl_rbio, data, size);
 	if (nwritten < size) {
-	    GET_SSL_STATUS(status);
+	    status = GET_SSL_STATUS(ssock);
 	    goto on_error;
 	}
     }
@@ -1323,7 +1468,7 @@ static pj_bool_t asock_on_data_read (pj_activesock_t *asock,
 		if (err != SSL_ERROR_NONE && err != SSL_ERROR_WANT_READ)
 		{
 		    /* Reset SSL socket state, then return PJ_FALSE */
-		    GET_SSL_STATUS(status);
+		    status = STATUS_FROM_SSL_ERR(ssock, err);
 		    reset_ssl_sock_state(ssock);
 		    goto on_error;
 		}
@@ -1335,9 +1480,15 @@ static pj_bool_t asock_on_data_read (pj_activesock_t *asock,
 		    /* Update certificates */
 		    update_certs_info(ssock);
 
-		    pj_lock_acquire(ssock->write_mutex);
+		    // Ticket #1573: Don't hold mutex while calling
+		    //               PJLIB socket send(). 
+		    //pj_lock_acquire(ssock->write_mutex);
 		    status = flush_delayed_send(ssock);
-		    pj_lock_release(ssock->write_mutex);
+		    //pj_lock_release(ssock->write_mutex);
+
+		    /* If flushing is ongoing, treat it as success */
+		    if (status == PJ_EBUSY)
+			status = PJ_SUCCESS;
 
 		    if (status != PJ_SUCCESS && status != PJ_EPENDING) {
 			PJ_PERROR(1,(ssock->pool->obj_name, status, 
@@ -1397,11 +1548,14 @@ static pj_bool_t asock_on_data_sent (pj_activesock_t *asock,
 
     } else if (send_key != &ssock->handshake_op_key) {
 	/* Some data has been sent, notify application */
-	write_data_t *wdata = (write_data_t*)send_key;
+	write_data_t *wdata = (write_data_t*)send_key->user_data;
 	if (ssock->param.cb.on_data_sent) {
 	    pj_bool_t ret;
+	    pj_ssize_t sent_len;
+
+	    sent_len = (sent > 0)? wdata->plain_data_len : sent;
 	    ret = (*ssock->param.cb.on_data_sent)(ssock, wdata->app_key, 
-						  wdata->plain_data_len);
+						  sent_len);
 	    if (!ret) {
 		/* We've been destroyed */
 		return PJ_FALSE;
@@ -1410,12 +1564,7 @@ static pj_bool_t asock_on_data_sent (pj_activesock_t *asock,
 
 	/* Update write buffer state */
 	pj_lock_acquire(ssock->write_mutex);
-	ssock->write_state.start += wdata->record_len;
-	ssock->write_state.len -= wdata->record_len;
-	if (ssock->write_state.last_data == wdata) {
-	    pj_assert(ssock->write_state.len == 0);
-	    ssock->write_state.last_data = NULL;
-	}
+	free_send_data(ssock, wdata);
 	pj_lock_release(ssock->write_mutex);
 
     } else {
@@ -1526,13 +1675,13 @@ static pj_bool_t asock_on_accept_complete (pj_activesock_t *asock,
 	goto on_return;
 
     /* Prepare write/send state */
-    pj_assert(ssock->write_state.max_len == 0);
-    ssock->write_state.buf = (char*)
-			     pj_pool_alloc(ssock->pool, 
-					   ssock->param.send_buffer_size);
-    ssock->write_state.max_len = ssock->param.send_buffer_size;
-    ssock->write_state.start = ssock->write_state.buf;
-    ssock->write_state.len = 0;
+    pj_assert(ssock->send_buf.max_len == 0);
+    ssock->send_buf.buf = (char*)
+			  pj_pool_alloc(ssock->pool, 
+					ssock->param.send_buffer_size);
+    ssock->send_buf.max_len = ssock->param.send_buffer_size;
+    ssock->send_buf.start = ssock->send_buf.buf;
+    ssock->send_buf.len = 0;
 
     /* Start handshake timer */
     if (ssock->param.timer_heap && (ssock->param.timeout.sec != 0 ||
@@ -1605,13 +1754,13 @@ static pj_bool_t asock_on_connect_complete (pj_activesock_t *asock,
 	goto on_return;
 
     /* Prepare write/send state */
-    pj_assert(ssock->write_state.max_len == 0);
-    ssock->write_state.buf = (char*)
+    pj_assert(ssock->send_buf.max_len == 0);
+    ssock->send_buf.buf = (char*)
 			     pj_pool_alloc(ssock->pool, 
 					   ssock->param.send_buffer_size);
-    ssock->write_state.max_len = ssock->param.send_buffer_size;
-    ssock->write_state.start = ssock->write_state.buf;
-    ssock->write_state.len = 0;
+    ssock->send_buf.max_len = ssock->param.send_buffer_size;
+    ssock->send_buf.start = ssock->send_buf.buf;
+    ssock->send_buf.len = 0;
 
 #ifdef SSL_set_tlsext_host_name
     /* Set server name to connect */
@@ -1784,7 +1933,10 @@ PJ_DEF(pj_status_t) pj_ssl_sock_create (pj_pool_t *pool,
     ssock->ssl_state = SSL_STATE_NULL;
     pj_list_init(&ssock->write_pending);
     pj_list_init(&ssock->write_pending_empty);
+    pj_list_init(&ssock->send_pending);
     pj_timer_entry_init(&ssock->timer, 0, ssock, &on_timer);
+    pj_ioqueue_op_key_init(&ssock->handshake_op_key,
+			   sizeof(pj_ioqueue_op_key_t));
 
     /* Create secure socket mutex */
     status = pj_lock_create_recursive_mutex(pool, pool->obj_name,
@@ -1905,6 +2057,9 @@ PJ_DEF(pj_status_t) pj_ssl_sock_get_info (pj_ssl_sock_t *ssock,
 	info->verify_status = ssock->verify_status;
     }
 
+    /* Last known OpenSSL error code */
+    info->last_native_err = ssock->last_err;
+
     return PJ_SUCCESS;
 }
 
@@ -2014,10 +2169,7 @@ PJ_DEF(pj_status_t) pj_ssl_sock_start_recvfrom2 (pj_ssl_sock_t *ssock,
     return PJ_ENOTSUP;
 }
 
-/* Write plain data to SSL and flush write BIO. Note that accessing
- * write BIO must be serialized, so a call to this function must be
- * protected by write mutex of SSL socket.
- */
+/* Write plain data to SSL and flush write BIO. */
 static pj_status_t ssl_write(pj_ssl_sock_t *ssock, 
 			     pj_ioqueue_op_key_t *send_key,
 			     const void *data,
@@ -2032,7 +2184,9 @@ static pj_status_t ssl_write(pj_ssl_sock_t *ssock,
      * negotitation may be on progress, so sending data should be delayed
      * until re-negotiation is completed.
      */
+    pj_lock_acquire(ssock->write_mutex);
     nwritten = SSL_write(ssock->ossl_ssl, data, size);
+    pj_lock_release(ssock->write_mutex);
     
     if (nwritten == size) {
 	/* All data written, flush write BIO to network socket */
@@ -2051,7 +2205,7 @@ static pj_status_t ssl_write(pj_ssl_sock_t *ssock,
 		status = PJ_EBUSY;
 	} else {
 	    /* Some problem occured */
-	    GET_SSL_STATUS(status);
+	    status = STATUS_FROM_SSL_ERR(ssock, err);
 	}
     } else {
 	/* nwritten < *size, shouldn't happen, unless write BIO cannot hold 
@@ -2063,56 +2217,81 @@ static pj_status_t ssl_write(pj_ssl_sock_t *ssock,
     return status;
 }
 
-/* Flush delayed data sending in the write pending list. Note that accessing
- * write pending list must be serialized, so a call to this function must be
- * protected by write mutex of SSL socket.
- */
+/* Flush delayed data sending in the write pending list. */
 static pj_status_t flush_delayed_send(pj_ssl_sock_t *ssock)
 {
+    /* Check for another ongoing flush */
+    if (ssock->flushing_write_pend)
+	return PJ_EBUSY;
+
+    pj_lock_acquire(ssock->write_mutex);
+
+    /* Again, check for another ongoing flush */
+    if (ssock->flushing_write_pend) {
+	pj_lock_release(ssock->write_mutex);
+	return PJ_EBUSY;
+    }
+
+    /* Set ongoing flush flag */
+    ssock->flushing_write_pend = PJ_TRUE;
+
     while (!pj_list_empty(&ssock->write_pending)) {
-        write_pending_t *wp;
+        write_data_t *wp;
 	pj_status_t status;
 
 	wp = ssock->write_pending.next;
 
-	status = ssl_write(ssock, &wp->data.key, wp->data.data.ptr, 
-			   wp->data.plain_data_len, wp->data.flags);
-	if (status != PJ_SUCCESS)
-	    return status;
+	/* Ticket #1573: Don't hold mutex while calling socket send. */
+	pj_lock_release(ssock->write_mutex);
 
+	status = ssl_write(ssock, &wp->key, wp->data.ptr, 
+			   wp->plain_data_len, wp->flags);
+	if (status != PJ_SUCCESS) {
+	    /* Reset ongoing flush flag first. */
+	    ssock->flushing_write_pend = PJ_FALSE;
+	    return status;
+	}
+
+	pj_lock_acquire(ssock->write_mutex);
 	pj_list_erase(wp);
 	pj_list_push_back(&ssock->write_pending_empty, wp);
     }
 
+    /* Reset ongoing flush flag */
+    ssock->flushing_write_pend = PJ_FALSE;
+
+    pj_lock_release(ssock->write_mutex);
+
     return PJ_SUCCESS;
 }
 
-/* Sending is delayed, push back the sending data into pending list. Note that
- * accessing write pending list must be serialized, so a call to this function
- * must be protected by write mutex of SSL socket.
- */
+/* Sending is delayed, push back the sending data into pending list. */
 static pj_status_t delay_send (pj_ssl_sock_t *ssock,
 			       pj_ioqueue_op_key_t *send_key,
 			       const void *data,
 			       pj_ssize_t size,
 			       unsigned flags)
 {
-    write_pending_t *wp;
+    write_data_t *wp;
+
+    pj_lock_acquire(ssock->write_mutex);
 
     /* Init write pending instance */
     if (!pj_list_empty(&ssock->write_pending_empty)) {
 	wp = ssock->write_pending_empty.next;
 	pj_list_erase(wp);
     } else {
-	wp = PJ_POOL_ZALLOC_T(ssock->pool, write_pending_t);
+	wp = PJ_POOL_ZALLOC_T(ssock->pool, write_data_t);
     }
 
-    wp->data.app_key = send_key;
-    wp->data.plain_data_len = size;
-    wp->data.data.ptr = data;
-    wp->data.flags = flags;
+    wp->app_key = send_key;
+    wp->plain_data_len = size;
+    wp->data.ptr = data;
+    wp->flags = flags;
 
     pj_list_push_back(&ssock->write_pending, wp);
+    
+    pj_lock_release(ssock->write_mutex);
 
     /* Must return PJ_EPENDING */
     return PJ_EPENDING;
@@ -2132,14 +2311,15 @@ PJ_DEF(pj_status_t) pj_ssl_sock_send (pj_ssl_sock_t *ssock,
     PJ_ASSERT_RETURN(ssock && data && size && (*size>0), PJ_EINVAL);
     PJ_ASSERT_RETURN(ssock->ssl_state==SSL_STATE_ESTABLISHED, PJ_EINVALIDOP);
 
-    pj_lock_acquire(ssock->write_mutex);
+    // Ticket #1573: Don't hold mutex while calling PJLIB socket send().
+    //pj_lock_acquire(ssock->write_mutex);
 
     /* Flush delayed send first. Sending data might be delayed when 
      * re-negotiation is on-progress.
      */
     status = flush_delayed_send(ssock);
     if (status == PJ_EBUSY) {
-	/* Re-negotiation is on progress, delay sending */
+	/* Re-negotiation or flushing is on progress, delay sending */
 	status = delay_send(ssock, send_key, data, *size, flags);
 	goto on_return;
     } else if (status != PJ_SUCCESS) {
@@ -2154,7 +2334,7 @@ PJ_DEF(pj_status_t) pj_ssl_sock_send (pj_ssl_sock_t *ssock,
     }
 
 on_return:
-    pj_lock_release(ssock->write_mutex);
+    //pj_lock_release(ssock->write_mutex);
     return status;
 }
 
@@ -2378,7 +2558,7 @@ PJ_DEF(pj_status_t) pj_ssl_sock_renegotiate(pj_ssl_sock_t *ssock)
 
     ret = SSL_renegotiate(ssock->ossl_ssl);
     if (ret <= 0) {
-	GET_SSL_STATUS(status);
+	status = GET_SSL_STATUS(ssock);
     } else {
 	status = do_handshake(ssock);
     }

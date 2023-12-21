@@ -1,4 +1,4 @@
-/* $Id: sip_util_statefull.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sip_util_statefull.c 4379 2013-02-27 09:54:51Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -59,7 +59,10 @@ static void mod_util_on_tsx_state(pjsip_transaction *tsx, pjsip_event *event)
 {
     struct tsx_data *tsx_data;
 
-    if (event->type != PJSIP_EVENT_TSX_STATE)
+    /* Check if the module has been unregistered (see ticket #1535) and also
+     * verify the event type.
+     */
+    if (mod_stateful_util.id < 0 || event->type != PJSIP_EVENT_TSX_STATE)
 	return;
 
     tsx_data = (struct tsx_data*) tsx->mod_data[mod_stateful_util.id];

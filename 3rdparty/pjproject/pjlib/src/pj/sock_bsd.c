@@ -1,4 +1,4 @@
-/* $Id: sock_bsd.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sock_bsd.c 4387 2013-02-27 10:16:08Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -718,7 +718,6 @@ PJ_DEF(pj_status_t) pj_sock_recvfrom(pj_sock_t sock,
 {
     PJ_CHECK_STACK();
     PJ_ASSERT_RETURN(buf && len, PJ_EINVAL);
-    PJ_ASSERT_RETURN(from && fromlen, (*len=-1, PJ_EINVAL));
 
     *len = recvfrom(sock, (char*)buf, *len, flags, 
 		    (struct sockaddr*)from, (socklen_t*)fromlen);
@@ -726,7 +725,9 @@ PJ_DEF(pj_status_t) pj_sock_recvfrom(pj_sock_t sock,
     if (*len < 0) 
 	return PJ_RETURN_OS_ERROR(pj_get_native_netos_error());
     else {
-	PJ_SOCKADDR_RESET_LEN(from);
+        if (from) {
+            PJ_SOCKADDR_RESET_LEN(from);
+        }
 	return PJ_SUCCESS;
     }
 }

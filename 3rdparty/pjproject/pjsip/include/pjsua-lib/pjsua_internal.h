@@ -1,4 +1,4 @@
-/* $Id: pjsua_internal.h 3829 2011-10-19 12:45:05Z bennylp $ */
+/* $Id: pjsua_internal.h 4389 2013-02-27 10:44:04Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -249,6 +249,9 @@ typedef struct pjsua_stun_resolve
     PJ_DECL_LIST_MEMBER(struct pjsua_stun_resolve);
 
     pj_pool_t		*pool;	    /**< Pool		    */
+    int			 ref_cnt;   /**< Reference count    */
+    pj_bool_t		 destroy_flag; /**< To be destroyed */
+    pj_bool_t		 has_result;
     unsigned		 count;	    /**< # of entries	    */
     pj_str_t		*srv;	    /**< Array of entries   */
     unsigned		 idx;	    /**< Current index	    */

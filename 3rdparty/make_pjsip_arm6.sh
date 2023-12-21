@@ -1,4 +1,4 @@
-. ./set_arm6.sh
+. ../build/set_arm6.sh
 cd pjproject
 make clean
 make 

@@ -1,4 +1,4 @@
-/* $Id: transport_ice.c 3906 2011-12-09 07:19:25Z bennylp $ */
+/* $Id: transport_ice.c 4384 2013-02-27 10:08:07Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -268,7 +268,9 @@ static void set_no_ice(struct transport_ice *tp_ice, const char *reason,
 		  "Stopping ICE, reason=%s", reason));
     }
 
-    pj_ice_strans_stop_ice(tp_ice->ice_st);
+    if (tp_ice->ice_st) {
+	pj_ice_strans_stop_ice(tp_ice->ice_st);
+    }
 
     tp_ice->use_ice = PJ_FALSE;
 }

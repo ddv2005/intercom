@@ -414,6 +414,7 @@ public:
 	virtual int make_call(int account_idx, const char* uri, pj_uint32_t timeout,
 			const char *user_options, pj_int32_t tag, bool is_raw_uri);
 	virtual unsigned hangup_calls_by_tag(pj_int32_t tag, unsigned code);
+	void check_calls_media();
 	virtual bool call_is_active(int callid);
 	virtual pjs_script_id_t create_thread(const char *script,const char *proc, const char *user_options, pj_int32_t tag);
 

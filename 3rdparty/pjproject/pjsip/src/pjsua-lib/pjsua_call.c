@@ -1,4 +1,4 @@
-/* $Id: pjsua_call.c 4067 2012-04-23 10:22:49Z ming $ */
+/* $Id: pjsua_call.c 4408 2013-02-27 15:05:29Z riza $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -33,6 +33,17 @@
  * Max UPDATE/re-INVITE retry to lock codec
  */
 #define LOCK_CODEC_MAX_RETRY	     5
+
+
+/*
+ * The INFO method.
+ */
+const pjsip_method pjsip_info_method =
+{
+    PJSIP_OTHER_METHOD,
+    { "INFO", 4 }
+};
+
 
 /* This callback receives notification from invite session when the
  * session state has changed.
@@ -174,6 +185,10 @@ pj_status_t pjsua_call_subsys_init(const pjsua_config *cfg)
     /* Add "norefersub" in Supported header */
     pjsip_endpt_add_capability(pjsua_var.endpt, NULL, PJSIP_H_SUPPORTED,
 			       NULL, 1, &str_norefersub);
+
+    /* Add "INFO" in Allow header, for DTMF and video key frame request. */
+    pjsip_endpt_add_capability(pjsua_var.endpt, NULL, PJSIP_H_ALLOW,
+			       NULL, 1, &pjsip_info_method.name);
 
     return status;
 }
@@ -1725,7 +1740,7 @@ PJ_DEF(pj_status_t) pjsua_call_reinvite( pjsua_call_id call_id,
 	return status;
     }
 
-    if ((options & PJSUA_CALL_UPDATE_CONTACT) &
+    if ((options & PJSUA_CALL_UPDATE_CONTACT) &&
 	    pjsua_acc_is_valid(call->acc_id))
     {
 	new_contact = &pjsua_var.acc[call->acc_id].contact;
@@ -1790,7 +1805,7 @@ PJ_DEF(pj_status_t) pjsua_call_update( pjsua_call_id call_id,
 	return status;
     }
 
-    if ((options & PJSUA_CALL_UPDATE_CONTACT) &
+    if ((options & PJSUA_CALL_UPDATE_CONTACT) &&
 	    pjsua_acc_is_valid(call->acc_id))
     {
 	new_contact = &pjsua_var.acc[call->acc_id].contact;
@@ -3463,6 +3478,15 @@ static void pjsua_call_on_state_changed(pjsip_inv_session *inv,
 	}
     }
 
+    /* Ticket #1627: Invoke on_call_tsx_state() when call is disconnected. */
+    if (inv->state == PJSIP_INV_STATE_DISCONNECTED &&
+	e->type == PJSIP_EVENT_TSX_STATE &&
+	call->inv &&
+	pjsua_var.ua_cfg.cb.on_call_tsx_state)
+    {
+	(*pjsua_var.ua_cfg.cb.on_call_tsx_state)(call->index,
+						 e->body.tsx_state.tsx, e);
+    }
 
     if (pjsua_var.ua_cfg.cb.on_call_state)
 	(*pjsua_var.ua_cfg.cb.on_call_state)(call->index, e);
@@ -4289,11 +4313,7 @@ static void pjsua_call_on_tsx_state_changed(pjsip_inv_session *inv,
     }
 
     if (call->inv == NULL) {
-	/* Shouldn't happen. It happens only when we don't terminate the
-	 * server subscription caused by REFER after the call has been
-	 * transfered (and this call has been disconnected), and we
-	 * receive another REFER for this call.
-	 */
+	/* Call has been disconnected. */
 	return;
     }
 
