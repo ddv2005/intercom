@@ -1,0 +1,16 @@
+[Unit]
+Description=MJPEG
+After=network.target auditd.service
+
+[Service]
+WorkingDirectory=/intercom/wapa_httpd
+Environment=
+ExecStart=bash -c '/intercom/wapa_httpd/start.sh'
+KillMode=control-group
+Restart=always
+RestartSec=3
+ExecStopPost=/bin/sleep 1
+
+[Install]
+WantedBy=multi-user.target
+Alias=mjpeg-streamer.service

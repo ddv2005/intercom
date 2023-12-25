@@ -13,6 +13,7 @@
 # set the compiler to use
 
 #export CFLAGS += -DDEBUG
+export CFLAGS += -DWXP_COMPAT
 
 
 # we are using the libraries "libpthread" and "libdl"
