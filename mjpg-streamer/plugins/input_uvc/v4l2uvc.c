@@ -63,6 +63,7 @@ int init_videoIn(struct vdIn *vd, char *device, int width,
         return -1;
     if(grabmethod < 0 || grabmethod > 1)
         grabmethod = 1;     //mmap by default;
+    vd->bytesused = 0;
     vd->videodevice = NULL;
     vd->status = NULL;
     vd->pictName = NULL;
@@ -467,6 +468,7 @@ int uvcGrab(struct vdIn *vd)
         goto err;
         break;
     }
+    vd->bytesused = vd->buf.bytesused;
 
     ret = xioctl(vd->fd, VIDIOC_QBUF, &vd->buf);
     if(ret < 0) {

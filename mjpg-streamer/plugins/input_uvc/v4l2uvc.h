@@ -81,6 +81,7 @@ struct vdIn {
     void *mem[NB_BUFFER];
     unsigned char *tmpbuffer;
     unsigned char *framebuffer;
+    int bytesused;
     streaming_state streamingState;
     int grabmethod;
     int width;
@@ -116,8 +117,6 @@ typedef struct {
     pthread_mutex_t controls_mutex;
     struct vdIn *videoIn;
 } context;
-
-context cams[MAX_INPUT_PLUGINS];
 
 int init_videoIn(struct vdIn *vd, char *device, int width, int height, int fps, int fps_div, int format, int grabmethod, globals *pglobal, int id);
 void enumerateControls(struct vdIn *vd, globals *pglobal, int id);
