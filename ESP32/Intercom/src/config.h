@@ -24,7 +24,7 @@ extern SemaphoreHandle_t debugLock;
 #define APP_WATCHDOG_SECS_INIT 70
 #define APP_WATCHDOG_SECS_WORK 15
 
-
+#define MAIN_BTN_PULLUP 1
 #define HOST_TIMEOUT  15000
 #define BTN_GUARD_TIME    100
 #define INP_GUARD_TIME    100

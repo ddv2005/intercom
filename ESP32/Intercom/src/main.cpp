@@ -43,9 +43,10 @@ public:
   input_c(byte_t pin,uint16_t guardTime,byte_t  inverse,byte_t  pullup):
   m_pin(pin),m_inverse(inverse),m_guardTime(guardTime)
   {
-    pinMode(m_pin,INPUT);
     if(pullup)
-      digitalWrite(m_pin, HIGH);
+      pinMode(m_pin,INPUT_PULLUP);
+    else
+      pinMode(m_pin,INPUT_PULLDOWN);
     reset();
   }
 
@@ -96,7 +97,7 @@ static void UltrasonicSensorThread(void *arg) {
   	for(int i = 0; i < ULTRASONIC_AVR ; i++)
  	  {
   		delay(10);
-  		values[i] = analogRead(PIN_ULTRASONIC);
+  		values[i] = analogReadMilliVolts(PIN_ULTRASONIC);
   		if(values[i]>max)
   		{
   			max = values[i];
@@ -134,7 +135,7 @@ static void UltrasonicSensorThread(void *arg) {
 #define BTN_LED_MAX  255
 #define BTN_LED_MIN  0
 //static byte_t  btnLedScript_ID01[] = { LCSC_OFF,  LCSC_WAIT, LCS_TIME_MS(50), LCSC_ON, LCSC_WAIT, LCS_TIME_MS(50)};
-static byte_t  btnLedScript_ID01[] = { LCSC_OFF,  LCSC_WAIT, LCS_TIME_MS(100), LCSC_FADE, BTN_LED_MAX, LCS_TIME_MS(500), LCSC_WAIT, LCS_TIME_MS(100), LCSC_FADE, BTN_LED_MIN, LCS_TIME_MS(500), LCSC_GOTO, 3 };
+static byte_t  btnLedScript_ID01[] = { LCSC_OFF,  LCSC_WAIT, LCS_TIME_MS(100), LCSC_FADE, BTN_LED_MAX, LCS_TIME_MS(500), LCSC_WAIT, LCS_TIME_MS(100), LCSC_FADE, BTN_LED_MIN, LCS_TIME_MS(500), LCSC_GOTO, 4 };
 static byte_t  btnLedScript_ID02[] = { LCSC_FADE, BTN_LED_MAX/2, LCS_TIME_MS(1500), LCSC_FADE, BTN_LED_MAX, LCS_TIME_MS(1500)};
 
 #define LED_SCRIPT(N,ID) { sizeof N, ID, N }
@@ -174,7 +175,7 @@ static void ControllerThread(void *arg) {
 
   pinMode(PIN_LED, OUTPUT);
 
-  digitalWrite(PIN_RELAY, HIGH);
+  digitalWrite(PIN_RELAY, LOW);
   pinMode(PIN_RELAY,OUTPUT);
 
   btnLed.setON();
@@ -201,12 +202,12 @@ static void ControllerThread(void *arg) {
       byte_t buttonState = btnInput.getValue(now);
       if(buttonState)
       {
-        digitalWrite(PIN_RELAY, LOW);
+        digitalWrite(PIN_RELAY, HIGH);
         btnLed.setOFF();
       }
       else
       {
-        digitalWrite(PIN_RELAY, HIGH);
+        digitalWrite(PIN_RELAY, LOW);
         btnLed.setON();
       }
       btn2Led.setOFF();
@@ -226,9 +227,9 @@ static void ControllerThread(void *arg) {
       if(currentOutputsValue != lastOutputsValue)
       {
         if(currentOutputsValue & AOM_RELAY)
-          digitalWrite(PIN_RELAY, LOW);
-        else
           digitalWrite(PIN_RELAY, HIGH);
+        else
+          digitalWrite(PIN_RELAY, LOW);
         lastOutputsValue = currentOutputsValue;
       }
       
@@ -469,13 +470,14 @@ void setup()
   resetIOValues();
   vTaskPrioritySet( NULL, tskIDLE_PRIORITY + 5 );
 #ifdef HAS_ULTRASONIC
+  adcAttachPin(PIN_ULTRASONIC);
   xTaskCreatePinnedToCore(UltrasonicSensorThread, "Ultrasonic Thread", 1024, NULL, tskIDLE_PRIORITY+4, &waUltrasonicSensorThread,1);
 #endif
   xTaskCreatePinnedToCore(BtnLedThread, "BtnLed Thread", 4096, NULL, tskIDLE_PRIORITY+3, &waBtnLedThread,0);
 
   xTaskCreatePinnedToCore(ControllerThread, "Controller Thread", 4096, NULL, tskIDLE_PRIORITY+2, &waControllerThread,1);
 
-  xTaskCreatePinnedToCore(SerialThread, "Controller Thread", 4096, NULL, tskIDLE_PRIORITY+1, &waSerialThread,1);
+  xTaskCreatePinnedToCore(SerialThread, "Serial Thread", 8192, NULL, tskIDLE_PRIORITY+1, &waSerialThread,1);
 
   DEBUG_MSG("Started\n");
   delay(100);
