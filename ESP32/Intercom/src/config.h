@@ -29,8 +29,10 @@ extern SemaphoreHandle_t debugLock;
 #define BTN_GUARD_TIME    100
 #define INP_GUARD_TIME    100
 #define MAX_PACKET_SIZE   32
+
 #define PIN_LED      2
 #define PIN_BTN_LED  18
+
 #define PIN_RELAY    32
 #define PIN_BTN      23
 #define PIN_INP1     26

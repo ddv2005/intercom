@@ -136,7 +136,7 @@ static void UltrasonicSensorThread(void *arg) {
 #define BTN_LED_MIN  0
 //static byte_t  btnLedScript_ID01[] = { LCSC_OFF,  LCSC_WAIT, LCS_TIME_MS(50), LCSC_ON, LCSC_WAIT, LCS_TIME_MS(50)};
 static byte_t  btnLedScript_ID01[] = { LCSC_OFF,  LCSC_WAIT, LCS_TIME_MS(100), LCSC_FADE, BTN_LED_MAX, LCS_TIME_MS(500), LCSC_WAIT, LCS_TIME_MS(100), LCSC_FADE, BTN_LED_MIN, LCS_TIME_MS(500), LCSC_GOTO, 4 };
-static byte_t  btnLedScript_ID02[] = { LCSC_FADE, BTN_LED_MAX/2, LCS_TIME_MS(1500), LCSC_FADE, BTN_LED_MAX, LCS_TIME_MS(1500)};
+static byte_t  btnLedScript_ID02[] = { LCSC_FADE, BTN_LED_MAX/3, LCS_TIME_MS(1500), LCSC_FADE, BTN_LED_MAX, LCS_TIME_MS(1500)};
 
 #define LED_SCRIPT(N,ID) { sizeof N, ID, N }
 static ledScript_t  btnLedScriptsArray[] = {LED_SCRIPT(btnLedScript_ID01,1),LED_SCRIPT(btnLedScript_ID02,2)};
