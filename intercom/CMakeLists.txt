@@ -52,4 +52,4 @@ set(prefix ${MACHTYPE})
 target_link_libraries(${PROJECT_NAME} 
   "-lpjsua-${prefix} -lpjsip-ua-${prefix} -lpjsip-simple-${prefix} -lpjsip-${prefix} -lpjnath-${prefix} -lpjmedia-codec-${prefix} -lpjmedia-audiodev-${prefix} -lpjmedia-${prefix} -lspeex-${prefix} -lsrtp-${prefix} -lresample-${prefix} -lpjlib-util-${prefix} -lpj-${prefix} -lrt -lasound -lpthread")
 
-set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-no-pie -static-libstdc++") 
+set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-s -fwhole-program  -Wl,--gc-sections -static-libstdc++") 
