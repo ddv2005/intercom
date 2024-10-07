@@ -226,23 +226,30 @@ function pjs_intercom:on_ultrasonic_data(msg)
 	utils:log(1,"Ultrasonic data " .. us)
 	if(us>0) then
 		local detected = (us<=self.opt.ultrasonic_trigger);
+		if(detected) then
+			self.ultrasonic_detected_count = self.ultrasonic_detected_count+1
+		else
+			self.ultrasonic_detected_count = 0
+		end
 		if(detected~=self.ultrasonic_triggered) then
-			self.ultrasonic_triggered = detected
-			if(self.ultrasonic_triggered) then
-				local canAction = not self.calling and self.door_closed and (utils:elapsed_msec(self.ultrasonic_last_triggered,now)>=self.opt.ultrasonic_timeout)
-				and (utils:elapsed_msec(self.last_door_closed,now)>=self.opt.ultrasonic_door_close_timeout)
-				and (self.ultrasonic_action_time==nil);
+			if ((detected) and (self.ultrasonic_detected_count>2)) then
+				self.ultrasonic_triggered = detected
+				if(self.ultrasonic_triggered) then
+					local canAction = not self.calling and self.door_closed and (utils:elapsed_msec(self.ultrasonic_last_triggered,now)>=self.opt.ultrasonic_timeout)
+					and (utils:elapsed_msec(self.last_door_closed,now)>=self.opt.ultrasonic_door_close_timeout)
+					and (self.ultrasonic_action_time==nil);
 
-				utils:log(1,"Ultrasonic detected")
-				if(canAction) then
-					utils:log(1,"Ultrasonic starting action")
-					self.ultrasonic_action_time = now;
-					if(self.vr:is_idle()) then
-						self.vr:play_file_async("double_beep.wav",0,0)
+					utils:log(1,"Ultrasonic detected")
+					if(canAction) then
+						utils:log(1,"Ultrasonic starting action")
+						self.ultrasonic_action_time = now;
+						if(self.vr:is_idle()) then
+							self.vr:play_file_async("double_beep.wav",0,0)
+						end
 					end
+				else
+					utils:log(1,"Ultrasonic empty")
 				end
-			else
-				utils:log(1,"Ultrasonic empty")
 			end
 			self.ultrasonic_last_triggered = now
 		end
@@ -287,6 +294,7 @@ function pjs_intercom:main()
 	self.pjsis:hangup_calls_by_tag(OUTGOING_CALLS_TAG,200)
 	self.door_closed = true
 	self.last_door_closed = now
+	self.ultrasonic_detected_count = 0
 	self.ultrasonic_triggered = false
 	self.ultrasonic_action_time = nil
 	self.ultrasonic_last_triggered = now

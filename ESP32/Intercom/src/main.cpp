@@ -44,7 +44,9 @@ public:
   m_pin(pin),m_inverse(inverse),m_guardTime(guardTime)
   {
     if(pullup)
+    {
       pinMode(m_pin,INPUT_PULLUP);
+    }
     else
       pinMode(m_pin,INPUT_PULLDOWN);
     reset();
